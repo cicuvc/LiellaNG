@@ -1,20 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
-    <OutDir>../bin/Backend.LLVM</OutDir>
+    <OutDir>../bin/Compiler</OutDir>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LLVMSharp" Version="16.0.0" />
+    <Folder Include="Elements\" />
+    <Folder Include="ILProcessors\" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Liella.Backend\Liella.Backend.csproj" />
+    <ProjectReference Include="..\Liella.TypeAnalysis\Liella.TypeAnalysis.csproj" />
   </ItemGroup>
 
 </Project>

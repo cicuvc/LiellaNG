@@ -13,6 +13,10 @@ namespace Liella.Backend.LLVM.Types
 
         LLVMTypeRef ILLVMType.InternalType => InvariantPart.InternalType;
 
+        public override int Size => throw new NotSupportedException();
+
+        public override int Alignment => throw new NotSupportedException();
+
         public static LLVMVoidType CreateFromKey(LLVMVoidType key, CodeGenTypeManager manager)
         {
             return new(key.InvariantPart);

@@ -36,6 +36,9 @@ namespace Liella.Backend.Types
         protected TTag m_InvariantPart;
         public TTag InvariantPart => m_InvariantPart;
         public abstract CGenTypeTag Tag { get; }
+        public abstract int Size { get; }
+        public abstract int Alignment { get; }
+
         public CGenAbstractType(in TTag invariant) {
             m_InvariantPart = invariant;
         }
@@ -56,6 +59,8 @@ namespace Liella.Backend.Types
     }
     public interface ICGenType:IEquatable<ICGenType> {
         CGenTypeTag Tag { get; }
+        int Size { get; }
+        int Alignment { get; }
     }
     public interface ICGenNumericType: ICGenType {
         public abstract int Width { get; }
@@ -72,7 +77,10 @@ namespace Liella.Backend.Types
         int Length { get; }
     }
     public interface ICGenStructType: ICGenType {
-        public abstract ReadOnlySpan<ICGenType> Fields { get; }
+        ReadOnlySpan<(ICGenType type, int offset)> Fields { get; }
+    }
+    public interface ICGenNamedStructType: ICGenStructType {
+        void SetStructBody(ReadOnlySpan<ICGenType> fields, bool isPacked);
     }
 
     public abstract class CGenTypeFactory {
@@ -82,9 +90,27 @@ namespace Liella.Backend.Types
         public abstract ICGenType Void { get; }
         public abstract ICGenType Int1 { get; }
 
-        public abstract ICGenStructType CreateStruct(ReadOnlySpan<ICGenType> types, bool packed, string? name = null);
+        public abstract ICGenNamedStructType CreateStruct(string name);
+        public abstract ICGenStructType CreateStruct(ReadOnlySpan<ICGenType> types, string? name = null);
         public abstract ICGenArrayType CreateArray(ICGenType elementType, int elementCount);
         public abstract ICGenPointerType CreatePointer(ICGenType elementType);
         public abstract ICGenFunctionType CreateFunction(ReadOnlySpan<ICGenType> arguments, ICGenType returnType, bool isVarArgs = false);
+    }
+    public static class CGenStructLayoutHelpers {
+        public static int[] LayoutStruct(ReadOnlySpan<ICGenType> types, out int totalSize) {
+            var offsets = new int[types.Length];
+            var currentOffset = 0;
+            for(var i = 0; i < types.Length; i++) {
+                var alignment = types[i].Alignment;
+                currentOffset += (currentOffset + alignment - 1) / alignment * alignment;
+
+                offsets[i] = currentOffset;
+                currentOffset += types[i].Size;
+            }
+
+            totalSize = currentOffset;
+
+            return offsets;
+        }
     }
 }

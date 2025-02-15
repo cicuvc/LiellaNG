@@ -17,6 +17,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Liella.Backend.LLVM", "Liel
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Liella.Driver", "Liella.Driver\Liella.Driver.csproj", "{460250C7-DB90-4B09-A8C5-0F63F7C3CACE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Liella.Compiler", "Liella.Compiler\Liella.Compiler.csproj", "{55A3EFA3-C04B-4F9C-9ACE-BDB7676E6D14}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +53,10 @@ Global
 		{460250C7-DB90-4B09-A8C5-0F63F7C3CACE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{460250C7-DB90-4B09-A8C5-0F63F7C3CACE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{460250C7-DB90-4B09-A8C5-0F63F7C3CACE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{55A3EFA3-C04B-4F9C-9ACE-BDB7676E6D14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{55A3EFA3-C04B-4F9C-9ACE-BDB7676E6D14}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{55A3EFA3-C04B-4F9C-9ACE-BDB7676E6D14}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{55A3EFA3-C04B-4F9C-9ACE-BDB7676E6D14}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

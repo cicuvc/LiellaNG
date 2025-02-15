@@ -46,18 +46,25 @@ namespace Liella.Backend.LLVM {
             return LLVMPointerType.Create(elementType, 0, Manager);
         }
 
-        public override ICGenStructType CreateStruct(ReadOnlySpan<ICGenType> types, bool packed, string? name = null)
+        public override ICGenStructType CreateStruct(ReadOnlySpan<ICGenType> types, string? name = null)
         {
             if (name is not null)
             {
                 var llvmContext = ((CodeGenLLVMContext)Context).ContextRef;
                 var type = llvmContext.CreateNamedStruct(name);
                 var typesImm = types.ToImmutableArray();
-                type.StructSetBody(typesImm.Select(e => ((ILLVMType)e).InternalType).ToArray(), packed);
+                type.StructSetBody(typesImm.Select(e => ((ILLVMType)e).InternalType).ToArray(), false);
 
-                return LLVMStructType.Create(type, typesImm, packed, Manager);
+                return LLVMStructType.Create(type, typesImm, Manager);
             }
-            return LLVMStructType.Create(types.ToImmutableArray(), false, Manager);
+            return LLVMStructType.Create(types.ToImmutableArray(), Manager);
+        }
+
+        public override ICGenNamedStructType CreateStruct(string name) {
+            var llvmContext = ((CodeGenLLVMContext)Context).ContextRef;
+            var type = llvmContext.CreateNamedStruct(name);
+
+            return LLVMNamedStructType.Create(type, name, Manager);
         }
     }
 }

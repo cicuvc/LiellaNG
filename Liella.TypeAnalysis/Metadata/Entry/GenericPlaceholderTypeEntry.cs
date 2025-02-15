@@ -1,5 +1,6 @@
 ﻿using Liella.TypeAnalysis.Metadata.Elements;
 using System.Collections.Immutable;
+using System.Reflection;
 using System.Reflection.Metadata;
 
 
@@ -18,6 +19,14 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public ImmutableArray<ITypeEntry> MethodArguments => ImmutableArray<ITypeEntry>.Empty;
 
         public IEnumerable<ITypeDeriveSource> DerivedType => Enumerable.Empty<ITypeDeriveSource>();
+
+        public TypeAttributes Attributes => (TypeAttributes)0;
+
+        public bool IsValueType => throw new NotImplementedException();
+
+        public IEnumerable<MethodDefEntry> TypeMethods => throw new NotSupportedException();
+
+        public IEnumerable<FieldDefEntry> TypeFields => throw new NotSupportedException();
 
         private GenericPlaceholderTypeEntry(TypeEnvironment typeEnv, in GenericPlaceholderTag tag) : base(typeEnv)
         {

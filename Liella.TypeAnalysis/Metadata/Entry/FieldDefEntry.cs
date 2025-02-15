@@ -1,4 +1,5 @@
 ﻿using Liella.TypeAnalysis.Metadata.Elements;
+using System.Reflection;
 using System.Reflection.Metadata;
 
 
@@ -6,10 +7,12 @@ namespace Liella.TypeAnalysis.Metadata.Entry
 {
     public class FieldDefEntry : EntityEntryBase<FieldDefEntry, FieldDefEntryTag, FieldDetails>, IEntityEntry<FieldDefEntry>, IEntityEntry
     {
+        public FieldAttributes Attributes => GetDetails().Attributes;
         public override string Name => GetDetails().Name;
         public override string FullName => $"{GetDetails().DeclType.FullName}::{GetDetails().Name}";
         public override bool IsGenericInstantiation => false;
         public override AssemblyReaderTuple AsmInfo => InvariantPart.AsmInfo;
+        public ITypeEntry FieldType => GetDetails().FieldType;
         public FieldDefEntry(TypeEnvironment typeEnv, in FieldDefEntryTag tag) : base(typeEnv)
         {
             m_InvariantPart = tag;

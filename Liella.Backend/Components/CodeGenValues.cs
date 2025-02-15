@@ -9,17 +9,21 @@ namespace Liella.Backend.Components {
     public class CodeGenLiteralType : ICGenType {
         private static Dictionary<CGenTypeTag, CodeGenLiteralType> m_Cache = new();
         public CGenTypeTag Tag { get; }
-        private CodeGenLiteralType(CGenTypeTag tag) => Tag = tag;
-        public static CodeGenLiteralType Create(CGenTypeTag tag) {
-            if(!m_Cache.TryGetValue(tag, out var type)) {
-                m_Cache.Add(tag, type = new CodeGenLiteralType(tag));
-            }
-            return type;
+
+        public int Size { get; }
+
+        public int Alignment { get; }
+
+
+        public CodeGenLiteralType(CGenTypeTag tag, int size, int alignment) {
+            Size = size;
+            Alignment = alignment;
+            Tag = tag;
         }
 
         public bool Equals(ICGenType? other) {
             if(other is CodeGenLiteralType literal)
-                return literal.Tag == Tag;
+                return literal.Tag == Tag && literal.Size == Size && literal.Alignment == Alignment;
             return false;
         }
     }
@@ -41,10 +45,10 @@ namespace Liella.Backend.Components {
             Type = type;
         }
         public static implicit operator CodeGenValue(int value) {
-            return new CodeGenLiternalValue<int>(CodeGenLiteralType.Create(CGenTypeTag.Integer), value);
+            return new CodeGenLiternalValue<int>(new CodeGenLiteralType(CGenTypeTag.Integer, 4, 4), value);
         }
         public static implicit operator CodeGenValue(uint value) {
-            return new CodeGenLiternalValue<uint>(CodeGenLiteralType.Create(CGenTypeTag.Integer | CGenTypeTag.Unsigned), value);
+            return new CodeGenLiternalValue<uint>(new CodeGenLiteralType(CGenTypeTag.Integer | CGenTypeTag.Unsigned, 4,4), value);
         }
     }
     public abstract class CodeGenBranchValue : CodeGenValue {

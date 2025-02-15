@@ -5,14 +5,22 @@ namespace Liella.Backend.LLVM.Types
 {
     public class LLVMPointerType : CGenAbstractType<LLVMPointerType, LLVMPointerTag>, ICGenType<LLVMPointerType>, ICGenPointerType, ILLVMType
     {
+        protected CodeGenTypeManager m_Manager;
         public override CGenTypeTag Tag => CGenTypeTag.Pointer;
 
         public ICGenType ElementType => InvariantPart.ELementType;
         LLVMTypeRef ILLVMType.InternalType => InvariantPart.InternalType;
-        public LLVMPointerType(in LLVMPointerTag tag) : base(tag) { }
+
+        public override int Size => m_Manager.Configuration.PointerSize;
+
+        public override int Alignment => m_Manager.Configuration.PointerSize;
+
+        public LLVMPointerType(in LLVMPointerTag tag, CodeGenTypeManager manager) : base(tag) {
+            m_Manager = manager;
+        }
         public static LLVMPointerType CreateFromKey(LLVMPointerType key, CodeGenTypeManager manager)
         {
-            return new(key.InvariantPart);
+            return new(key.InvariantPart, manager);
         }
         public static LLVMPointerType Create(ICGenType elementType, int asid, CodeGenTypeManager manager)
         {

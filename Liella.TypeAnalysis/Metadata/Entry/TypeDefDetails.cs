@@ -9,6 +9,8 @@ namespace Liella.TypeAnalysis.Metadata.Entry
 {
     public struct TypeDefDetails : IDetails<TypeDefEntry>
     {
+        public TypeAttributes Attributes { get; private set; }
+        public bool IsValueType { get; private set; }
         public string Name { get; private set; }
         public TypeNode Prototype { get; private set; }
         public TypeDefEntry Entry { get; private set; }
@@ -30,6 +32,7 @@ namespace Liella.TypeAnalysis.Metadata.Entry
             Entry = entry;
             TypeDef = metaReader.GetTypeDefinition(typeDef);
 
+            Attributes = entry.Attributes;
             Name = metaReader.GetString(TypeDef.Name);
 
             Prototype = typeEnv.NamespaceTree[entry.InvariantPart.AsmInfo.Token].TypeNodes[typeDef];
@@ -56,6 +59,21 @@ namespace Liella.TypeAnalysis.Metadata.Entry
             {
                 BaseType = typeEnv.TokenResolver.ResolveTypeToken(entry.AsmInfo, TypeDef.BaseType, new GenericTypeContext(TypeArguments, []));
                 DerivedEntry.Add(BaseType);
+            }
+
+
+            if(BaseType is TypeDefEntry baseEntry) {
+                var baseFullName = baseEntry.GetDetails().Prototype.FullName;
+                IsValueType = baseFullName switch {
+                    ".System.Enum" => true,
+                    ".System.ValueType" => false,
+                    _ => BaseType.IsValueType
+                };
+            } else {
+                if(Prototype.FullName == ".System.Object") {
+                    IsValueType = false;
+                }
+                throw new NotSupportedException();
             }
 
             VirtualMethods = Methods.Where(e => e.GetDetails().MethodDef.Attributes.HasFlag(MethodAttributes.Virtual)).ToImmutableArray();

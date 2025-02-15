@@ -1,5 +1,6 @@
 ﻿using Liella.TypeAnalysis.Metadata.Elements;
 using System.Collections.Immutable;
+using System.Reflection;
 using System.Reflection.Metadata;
 
 
@@ -18,6 +19,12 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public ITypeEntry? BaseType => GetDetails().BaseType;
         public IEnumerable<ITypeDeriveSource> DerivedType => GetDetails().DerivedEntry;
         public ImmutableArray<MethodDefEntry> Methods => GetDetails().Methods;
+        public TypeAttributes Attributes => GetDetails().Attributes;
+        public bool IsValueType => GetDetails().IsValueType;
+
+        public IEnumerable<MethodDefEntry> TypeMethods => Methods;
+
+        public IEnumerable<FieldDefEntry> TypeFields => GetDetails().Fields;
         private TypeDefEntry(TypeEnvironment typeEnv, in TypeDefEntryTag tag) : base(typeEnv)
         {
             m_InvariantPart = tag;

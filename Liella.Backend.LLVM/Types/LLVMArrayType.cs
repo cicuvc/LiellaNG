@@ -12,6 +12,10 @@ namespace Liella.Backend.LLVM.Types
 
         public int Length => InvariantPart.Length;
 
+        public override int Size => ElementType.Size * Length;
+
+        public override int Alignment => ElementType.Alignment;
+
         public LLVMArrayType(in LLVMArrayTag tag) : base(tag) { }
         public static LLVMArrayType CreateFromKey(LLVMArrayType key, CodeGenTypeManager manager)
         {

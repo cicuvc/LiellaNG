@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <BaseIntermediateOutputPath>../obj/Compiler</BaseIntermediateOutputPath>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+</Project>

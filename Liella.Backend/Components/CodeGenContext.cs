@@ -19,7 +19,7 @@ namespace Liella.Backend.Components {
     public abstract class CodeGenContext {
         public abstract CGenTypeFactory TypeFactory { get; }
         public abstract IConstGenerator ConstGenerator { get; }
-        public CodeGenTypeManager TypeManager { get; } = new();
+        public CodeGenTypeManager TypeManager { get; } = new(new(8));
         protected Dictionary<string, CodeGenFunction> m_Functions  = new();
         protected Dictionary<string, ICGenStructType> m_NamedStructs = new();
         protected Dictionary<string, CodeGenValue> m_GlobalValues = new();

@@ -107,6 +107,7 @@ namespace Liella.Backend.Cold.Image.ELF {
         public long Value { get; }
         public long SymbolSize { get; }
     }
+    [StructLayout(LayoutKind.Sequential)]
     public struct ElfFileSymbolData64 {
         private int m_Name;
         private byte m_TypeAttribute;
@@ -122,6 +123,7 @@ namespace Liella.Backend.Cold.Image.ELF {
         public long SymbolSize => m_Size;
         public unsafe static int Size => sizeof(ElfFileSymbolData64);
     }
+    [StructLayout(LayoutKind.Sequential)]
     public unsafe struct ElfFileSectionHeader<TPtrType> where TPtrType : unmanaged, INumber<TPtrType> {
         private int m_NameOffset;
         private int m_Type;

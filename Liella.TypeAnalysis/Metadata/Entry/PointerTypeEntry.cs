@@ -1,5 +1,6 @@
 ﻿using Liella.TypeAnalysis.Metadata.Elements;
 using System.Collections.Immutable;
+using System.Reflection;
 using System.Reflection.Metadata;
 
 
@@ -22,7 +23,11 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public ImmutableArray<ITypeEntry> MethodArguments => InvariantPart.BaseType.MethodArguments;
 
         public IEnumerable<ITypeDeriveSource> DerivedType { get; }
+        public TypeAttributes Attributes => (TypeAttributes)0;
+        public bool IsValueType => true;
+        public IEnumerable<MethodDefEntry> TypeMethods => throw new NotSupportedException();
 
+        public IEnumerable<FieldDefEntry> TypeFields => throw new NotSupportedException();
         public PointerTypeEntry(TypeEnvironment typeEnv, in PointerTypeEntryTag tag) : base(typeEnv)
         {
             m_InvariantPart = new(tag.BaseType);

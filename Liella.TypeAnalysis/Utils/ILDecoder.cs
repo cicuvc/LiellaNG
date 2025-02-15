@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Reflection.Emit;
 using System.Reflection.Metadata;
@@ -8,39 +9,40 @@ namespace Liella.TypeAnalysis.Utils
 {
     public class ILDecoder : IEnumerable<(ILOpCode opcode, ulong operand)>
     {
-        private static Dictionary<ILOpCode, OpCode> m_OpCodeMap = new();
-        private static Dictionary<ILOpCode, int> m_OpCodeSizeMap = new();
-        public static Dictionary<ILOpCode, OpCode> OpCodeMap => m_OpCodeMap;
+        public static FrozenDictionary<ILOpCode, OpCode> OpCodeMap { get; }
+        public static FrozenDictionary<ILOpCode, int> OpCodeSizeMap { get; }
         static ILDecoder()
         {
+            var opCodeMap = new Dictionary<ILOpCode, OpCode>();
+            var opCodeSizeMap = new Dictionary<ILOpCode, int>();
             foreach (var i in typeof(OpCodes).GetFields())
             {
                 var value = (OpCode)(i.GetValue(null) ?? default(OpCode));
-                m_OpCodeMap.Add((ILOpCode)value.Value, value);
+                opCodeMap.Add((ILOpCode)value.Value, value);
 
                 switch (value.OperandType)
                 {
                     case OperandType.InlineNone:
                         {
-                            m_OpCodeSizeMap.Add((ILOpCode)value.Value, 0);
+                        opCodeSizeMap.Add((ILOpCode)value.Value, 0);
                             break;
                         }
                     case OperandType.ShortInlineBrTarget:
                     case OperandType.ShortInlineI:
                     case OperandType.ShortInlineVar:
                         {
-                            m_OpCodeSizeMap.Add((ILOpCode)value.Value, 1);
+                        opCodeSizeMap.Add((ILOpCode)value.Value, 1);
                             break;
                         }
                     case OperandType.InlineSwitch:
                         {
-                            m_OpCodeSizeMap.Add((ILOpCode)value.Value, 4);
+                        opCodeSizeMap.Add((ILOpCode)value.Value, 4);
                             break;
                         }
 
                     case OperandType.InlineVar:
                         {
-                            m_OpCodeSizeMap.Add((ILOpCode)value.Value, 2);
+                        opCodeSizeMap.Add((ILOpCode)value.Value, 2);
                             break;
                         }
                     case OperandType.ShortInlineR:
@@ -53,22 +55,25 @@ namespace Liella.TypeAnalysis.Utils
                     case OperandType.InlineTok:
                     case OperandType.InlineType:
                         {
-                            m_OpCodeSizeMap.Add((ILOpCode)value.Value, 4);
+                        opCodeSizeMap.Add((ILOpCode)value.Value, 4);
                             break;
                         }
                     case OperandType.InlineI8:
                     case OperandType.InlineR:
                         {
-                            m_OpCodeSizeMap.Add((ILOpCode)value.Value, 8);
+                        opCodeSizeMap.Add((ILOpCode)value.Value, 8);
                             break;
                         }
                     default: throw new NotImplementedException();
                 }
             }
+            OpCodeMap = opCodeMap.ToFrozenDictionary();
+            OpCodeSizeMap = opCodeSizeMap.ToFrozenDictionary();
         }
 
         protected ImmutableArray<byte> m_ILCodes = ImmutableArray<byte>.Empty;
         protected ImmutableArray<(ILOpCode opcode, ulong operand)> m_Insts;
+        public ImmutableArray<(ILOpCode opcode, ulong operand)> Instructions => m_Insts;
         public ILDecoder(ImmutableArray<byte> ilCode)
         {
             m_ILCodes = ilCode;
@@ -94,7 +99,7 @@ namespace Liella.TypeAnalysis.Utils
             {
                 ilOpcode = (ILOpCode)(((uint)ilOpcode << 8) + code[i++]);
             }
-            var opcode = m_OpCodeMap[ilOpcode];
+            var opcode = OpCodeMap[ilOpcode];
 
 
             var operandSize = opcode.OperandType switch

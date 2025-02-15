@@ -14,6 +14,10 @@ namespace Liella.Backend.LLVM.Types
 
         LLVMTypeRef ILLVMType.InternalType => InvariantPart.InternalType;
 
+        public override int Size => throw new NotSupportedException();
+
+        public override int Alignment => throw new NotSupportedException();
+
         public LLVMFunctionType(in LLVMFunctionTag tag) : base(tag)
         {
         }

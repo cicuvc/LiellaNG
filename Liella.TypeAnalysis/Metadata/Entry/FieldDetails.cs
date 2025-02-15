@@ -1,4 +1,5 @@
 ﻿using Liella.TypeAnalysis.Metadata.Elements;
+using System.Reflection;
 using System.Reflection.Metadata;
 
 
@@ -6,6 +7,7 @@ namespace Liella.TypeAnalysis.Metadata.Entry
 {
     public struct FieldDetails : IDetails<FieldDefEntry>
     {
+        public FieldAttributes Attributes { get; private set; }
         public FieldDefEntry Entry { get; private set; }
         public FieldDefinition FieldDef { get; private set; }
         public ITypeEntry FieldType { get; private set; }
@@ -20,6 +22,8 @@ namespace Liella.TypeAnalysis.Metadata.Entry
 
             Entry = entry;
             FieldDef = metaReader.GetFieldDefinition(entry.InvariantPart.FieldDef);
+
+            Attributes = FieldDef.Attributes;
 
             DeclType = TypeDefEntry.Create(typeEnv.EntryManager, entry.AsmInfo, FieldDef.GetDeclaringType());
 

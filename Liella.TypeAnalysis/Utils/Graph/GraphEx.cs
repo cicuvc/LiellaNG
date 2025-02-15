@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Liella.TypeAnalysis.Utils.Graph {
+    public struct EmptyExtraData { }
     public class FwdGraph<TNode, TEdgeExtraData> : IEnumerable<TNode>
         where TNode : class
     {

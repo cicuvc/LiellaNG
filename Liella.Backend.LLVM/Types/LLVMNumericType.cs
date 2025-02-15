@@ -18,6 +18,17 @@ namespace Liella.Backend.LLVM.Types
 
         LLVMTypeRef ILLVMType.InternalType => InvariantPart.InternalType;
 
+        public override int Size {
+            get => ((int)InvariantPart.InternalType.IntWidth - 1) / 8 + 1;
+        }
+
+        public override int Alignment {
+            get {
+                if(Tag.HasFlag(CGenTypeTag.Float)) return Size;
+                else return Math.Min(4, Size);
+            }
+        }
+
         public LLVMNumericType(LLVMNumericTypeTag tag) : base(tag)
         {
         }
