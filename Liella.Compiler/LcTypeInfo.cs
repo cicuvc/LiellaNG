@@ -36,10 +36,10 @@ namespace Liella.Backend.Compiler {
     }
     public abstract class LcTypeInfo {
         public LcTypeContext Context { get; }
-        public abstract ICGenNamedStructType StaticStorage { get; }
-        public abstract ICGenNamedStructType DataStorage { get; }
-        public abstract ICGenType InstanceType { get; }
         public abstract ICGenType? VirtualTableType { get; }
+        public abstract ICGenType GetInstanceTypeEnsureDef();
+        public abstract ICGenNamedStructType GetDataStorageTypeEnsureDef();
+        public abstract ICGenNamedStructType GetStaticStorageTypeEnsureDef();
 
         public abstract void SetupTypes();
 
@@ -47,39 +47,109 @@ namespace Liella.Backend.Compiler {
             Context = context;
         }
     }
-    
+    public static class LcTypeLayoutOptimizer { 
+        public static void OptimizeLayout(ICGenType? baseStorage, List<(FieldDefEntry field, ICGenType type)> types) {
+            var typeGroups = types.GroupBy(e => e.type.Alignment)
+                .Select(e => (align: e.Key, value: e.ToList())).ToList();
+
+            typeGroups.Sort((u, v) => -u.align.CompareTo(v.align));
+            foreach(var i in typeGroups) {
+                i.value.Sort((u, v) => -u.type.Alignment.CompareTo(v.type.Alignment));
+            }
+
+            var currentOffset = baseStorage?.Size ?? 0;
+            for(var i=0;i< types.Count; i++) {
+                var candidate = default((FieldDefEntry field, ICGenType type));
+                while(candidate.type is null) {
+                    for(var j = 0; j < typeGroups.Count; j++) {
+                        if(currentOffset % typeGroups[j].align != 0) continue;
+                        var typeSet = typeGroups[j].value;
+                        var lastElement = typeSet.Count - 1;
+                        candidate = typeSet[lastElement];
+                        typeSet.RemoveAt(lastElement);
+
+                        if(typeSet.Count == 0) typeGroups.RemoveAt(j);
+
+                        break;
+                    }
+                    if(candidate.type is null) {
+                        var alignment = typeGroups.Last().align;
+                        currentOffset = (currentOffset + alignment - 1) / alignment * alignment;
+                    }
+                }
+                currentOffset += candidate.type.Size;
+                types[i] = candidate;
+            }
+        }
+    }
     public class LcTypeDefInfo : LcTypeInfo {
         protected Dictionary<FieldDefEntry, (int offset, int index)> m_DataStorageLayout = new();
         public ITypeEntry Entry { get; }
-        public override ICGenNamedStructType StaticStorage { get; }
-        public override ICGenNamedStructType DataStorage { get; }
-        public override ICGenType InstanceType { get; }
+        public ICGenNamedStructType StaticStorage { get; }
+        public ICGenNamedStructType DataStorage { get; }
+        public ICGenType? InstanceType { get; protected set; }
         public override ICGenType? VirtualTableType => throw new NotImplementedException();
         public IReadOnlyDictionary<FieldDefEntry, (int offset, int index)> DataStorageLayout => m_DataStorageLayout;
         public bool IsExplicitLayout { get; }
+        public bool IsTypeDefined { get; protected set; }
+        public CodeGenContext CgContext { get; }
         public LcTypeDefInfo(ITypeEntry entry, LcTypeContext typeContext, CodeGenContext cgContext) : base(typeContext) {
             Entry = entry;
 
             StaticStorage = cgContext.TypeFactory.CreateStruct($"static.{entry.FullName}");
             DataStorage = cgContext.TypeFactory.CreateStruct($"data.{entry.FullName}");
 
-            InstanceType = entry.IsValueType ? DataStorage : cgContext.TypeFactory.CreatePointer(DataStorage);
+            
             IsExplicitLayout = Entry.Attributes.HasFlag(TypeAttributes.ExplicitLayout);
+
+            CgContext = cgContext;
+        }
+        public override ICGenType GetInstanceTypeEnsureDef() {
+            if(!IsTypeDefined) SetupTypes();
+            return InstanceType!;
+        }
+        public override ICGenNamedStructType GetDataStorageTypeEnsureDef() {
+            if(!IsTypeDefined) SetupTypes();
+            return DataStorage;
+        }
+        public override ICGenNamedStructType GetStaticStorageTypeEnsureDef() {
+            if(!IsTypeDefined) SetupTypes();
+            return StaticStorage;
         }
         public override void SetupTypes() {
+            if(IsTypeDefined) return;
+            IsTypeDefined = true;
+
             StaticStorage.SetStructBody(
                 Entry.TypeFields
                 .Where(e => e.Attributes.HasFlag(FieldAttributes.Static))
-                .Select(e => Context.NativeTypeMap[e.FieldType].InstanceType).ToArray(), false);
+                .Select(e => Context.NativeTypeMap[e.FieldType].GetInstanceTypeEnsureDef()).ToArray());
 
             var dataStorageElements = new List<ICGenType>();
-            // Must be struct
+
+            var isSequential = true;
             if(IsExplicitLayout) {
+                throw new NotImplementedException();
+            } else {
+                var dataStorageTypes = new List<(FieldDefEntry field, ICGenType type)>();
+                var baseStorage = Entry.BaseType is not null ? Context.NativeTypeMap[Entry.BaseType].GetDataStorageTypeEnsureDef(): null;
 
-            }
-            if(Entry.BaseType is not null) {
+                foreach(var i in Entry.TypeFields) {
+                    if(i.Attributes.HasFlag(FieldAttributes.Static)) continue;
+                    dataStorageTypes.Add((i, Context.NativeTypeMap[i.FieldType].GetInstanceTypeEnsureDef()));
+                }
 
+                if(!isSequential)
+                    LcTypeLayoutOptimizer.OptimizeLayout(baseStorage, dataStorageTypes);
+
+                var types = dataStorageTypes.Select(e => e.type);
+                DataStorage.SetStructBody(baseStorage is null ? types.ToArray() : types.Prepend(baseStorage).ToArray());
             }
+
+            InstanceType = Entry.IsValueType ? DataStorage : CgContext.TypeFactory.CreatePointer(DataStorage);
+
+
+
         }
 
     }

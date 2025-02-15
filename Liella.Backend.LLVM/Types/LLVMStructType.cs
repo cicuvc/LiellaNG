@@ -24,12 +24,12 @@ namespace Liella.Backend.LLVM.Types
             return CreateEntry(manager, new LLVMNamedStructTag(namedStruct, name));
         }
 
-        public void SetStructBody(ReadOnlySpan<ICGenType> fields, bool isPacked) {
+        public void SetStructBody(ReadOnlySpan<ICGenType> fields) {
             var fieldsArray = fields.ToArray();
             m_Fields = fieldsArray.Zip(CGenStructLayoutHelpers.LayoutStruct(fields, out m_Size)).ToArray();
             m_Alignment = fieldsArray.Select(e => e.Alignment).Max();
 
-            InvariantPart.InternalType.StructSetBody(m_Fields.Select(e => ((ILLVMType)e.type).InternalType).ToArray(), isPacked);
+            InvariantPart.InternalType.StructSetBody(m_Fields.Select(e => ((ILLVMType)e.type).InternalType).ToArray(), false);
         }
     }
     public class LLVMStructType : CGenAbstractType<LLVMStructType, LLVMStructTag>, ICGenType<LLVMStructType>, ICGenStructType, ILLVMType
