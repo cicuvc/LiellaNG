@@ -1,6 +1,7 @@
 ﻿using Liella.TypeAnalysis.Metadata.Elements;
 using Liella.TypeAnalysis.Namespaces;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Metadata;
 
@@ -12,6 +13,7 @@ namespace Liella.TypeAnalysis.Metadata.Entry
     {
         public TypeAttributes Attributes { get; private set; }
         public bool IsValueType { get; private set; }
+        public bool IsEnum { get; private set; }
         public string Name { get; private set; }
         public TypeNode Prototype { get; private set; }
         public TypeDefEntry Entry { get; private set; }
@@ -57,6 +59,8 @@ namespace Liella.TypeAnalysis.Metadata.Entry
 
             DerivedEntry = [.. TypeArguments, .. Fields.Select(e => e.GetDetails().FieldType)];
 
+
+
             if (!TypeDef.BaseType.IsNil)
             {
                 BaseType = typeEnv.TokenResolver.ResolveTypeToken(entry.AsmInfo, TypeDef.BaseType, new GenericTypeContext(TypeArguments, []));
@@ -68,9 +72,10 @@ namespace Liella.TypeAnalysis.Metadata.Entry
                 var baseFullName = baseEntry.GetDetails().Prototype.FullName;
                 IsValueType = baseFullName switch {
                     ".System.Enum" => true,
-                    ".System.ValueType" => false,
+                    ".System.ValueType" => true,
                     _ => BaseType.IsValueType
                 };
+                IsEnum = baseFullName == ".System.Enum";
             } else {
                 if(Prototype.FullName == ".System.Object" || Prototype.FullName == ".<Module>") {
                     IsValueType = false;

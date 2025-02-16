@@ -8,17 +8,16 @@ using System.Threading.Tasks;
 
 namespace Liella.Backend.LLVM {
     public class LLVMCodeGenFactory : CodeGenFactory {
+        private static void TargetX86Init() {
+            LLVMSharp.Interop.LLVM.InitializeX86Target();
+            LLVMSharp.Interop.LLVM.InitializeX86TargetMC();
+            LLVMSharp.Interop.LLVM.InitializeX86TargetInfo();
+            LLVMSharp.Interop.LLVM.InitializeX86AsmParser();
+            LLVMSharp.Interop.LLVM.InitializeX86AsmPrinter();
+        }
         private static Dictionary<string, Action> m_TargetInitCode = new() {
-            { 
-                "x86", 
-                () => {
-                    LLVMSharp.Interop.LLVM.InitializeX86Target();
-                    LLVMSharp.Interop.LLVM.InitializeX86TargetMC();
-                    LLVMSharp.Interop.LLVM.InitializeX86TargetInfo();
-                    LLVMSharp.Interop.LLVM.InitializeX86AsmParser();
-                    LLVMSharp.Interop.LLVM.InitializeX86AsmPrinter();
-                } 
-            }
+            { "x86", TargetX86Init },
+            { "x86_64", TargetX86Init }
         };
         public override CodeGenCompileOptions CreateCompileOptions()
             => new LLVMCodeGenCompileOptions();

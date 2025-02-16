@@ -30,5 +30,8 @@ namespace Liella.Backend.LLVM.Types
             var fnType = LLVMTypeRef.CreateFunction(((ILLVMType)returnType).InternalType, paramTypes.Select(e => ((ILLVMType)e).InternalType).ToArray(), isVarArgs);
             return CreateEntry(manager, new(fnType, paramTypes, returnType, isVarArgs));
         }
+        public override string ToString() {
+            return InvariantPart.InternalType.PrintToString();
+        }
     }
 }

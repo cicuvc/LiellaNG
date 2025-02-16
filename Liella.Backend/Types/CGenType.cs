@@ -80,6 +80,7 @@ namespace Liella.Backend.Types
         ReadOnlySpan<(ICGenType type, int offset)> Fields { get; }
     }
     public interface ICGenNamedStructType: ICGenStructType {
+        string Name { get; }
         void SetStructBody(ReadOnlySpan<ICGenType> fields);
     }
 

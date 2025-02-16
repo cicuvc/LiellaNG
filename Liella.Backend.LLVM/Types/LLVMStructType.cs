@@ -16,6 +16,7 @@ namespace Liella.Backend.LLVM.Types
         public override int Size => m_Size;
 
         public override int Alignment => m_Alignment;
+        public string Name => InvariantPart.Name;
         public LLVMNamedStructType(in LLVMNamedStructTag tag) : base(tag) { }
         public static LLVMNamedStructType CreateFromKey(LLVMNamedStructType key, CodeGenTypeManager manager) {
             return new(key.InvariantPart);
@@ -27,9 +28,12 @@ namespace Liella.Backend.LLVM.Types
         public void SetStructBody(ReadOnlySpan<ICGenType> fields) {
             var fieldsArray = fields.ToArray();
             m_Fields = fieldsArray.Zip(CGenStructLayoutHelpers.LayoutStruct(fields, out m_Size)).ToArray();
-            m_Alignment = fieldsArray.Select(e => e.Alignment).Max();
+            m_Alignment = fieldsArray.Select(e => e.Alignment).DefaultIfEmpty(1).Max();
 
             InvariantPart.InternalType.StructSetBody(m_Fields.Select(e => ((ILLVMType)e.type).InternalType).ToArray(), false);
+        }
+        public override string ToString() {
+            return InvariantPart.InternalType.PrintToString();
         }
     }
     public class LLVMStructType : CGenAbstractType<LLVMStructType, LLVMStructTag>, ICGenType<LLVMStructType>, ICGenStructType, ILLVMType

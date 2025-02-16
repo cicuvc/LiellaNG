@@ -1,4 +1,5 @@
 ﻿using Liella.Backend.Components;
+using Liella.Compiler;
 using Liella.TypeAnalysis.Metadata;
 using Liella.Utils;
 using LLVMSharp.Interop;
@@ -24,6 +25,11 @@ namespace Liella.Driver {
             icu.BuildTypeEnvironment();
 
             LiLogger.Default.Info("Driver", "Type collect complete");
+
+            var compiler = new LcCompileContext(icu.TypeEnv, "payload", "x86_64-pc-windows");
+            compiler.StartCompilation();
+
+            compiler.Module.DumpModule();
 
             Console.ReadLine();
         }

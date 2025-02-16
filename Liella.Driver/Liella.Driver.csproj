@@ -12,6 +12,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Liella.Backend.LLVM\Liella.Backend.LLVM.csproj" />
     <ProjectReference Include="..\Liella.Backend\Liella.Backend.csproj" />
+    <ProjectReference Include="..\Liella.Compiler\Liella.Compiler.csproj" />
     <ProjectReference Include="..\Liella.TypeAnalysis\Liella.TypeAnalysis.csproj" />
     <ProjectReference Include="..\Liella.Utils\Liella.Utils.csproj" />
   </ItemGroup>

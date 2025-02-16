@@ -27,5 +27,11 @@ namespace Liella.Backend.LLVM.Types
             var elementTypeRef = ((ILLVMType)elementType).InternalType;
             return CreateEntry(manager, new LLVMPointerTag(LLVMTypeRef.CreatePointer(elementTypeRef, (uint)asid), elementType));
         }
+        public override string ToString() {
+            if(InvariantPart.ELementType is ICGenNamedStructType namedStruct) {
+                return $"{namedStruct.Name}*";
+            }
+            return $"{InvariantPart.ELementType}*";
+        }
     }
 }

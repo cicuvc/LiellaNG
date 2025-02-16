@@ -52,5 +52,8 @@ namespace Liella.Backend.LLVM.Types
         {
             return CreateEntry(manager, new(LLVMTypeRef.Double, true, false));
         }
+        public override string ToString() {
+            return InvariantPart.InternalType.PrintToString();
+        }
     }
 }

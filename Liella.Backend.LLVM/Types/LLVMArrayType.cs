@@ -26,5 +26,8 @@ namespace Liella.Backend.LLVM.Types
             var elementTypeRef = ((ILLVMType)elementType).InternalType;
             return CreateEntry(manager, new LLVMArrayTag(LLVMTypeRef.CreateArray(elementTypeRef, (uint)length), elementType, length));
         }
+        public override string ToString() {
+            return InvariantPart.InternalType.PrintToString();
+        }
     }
 }
