@@ -214,7 +214,5 @@ namespace Liella.Backend.Compiler {
                .Select(e => Context.NativeTypeMap[e.FieldType].GetInstanceTypeEnsureDef()).ToArray());
             return m_StaticStorageType;
         }
-
-
     }
 }
