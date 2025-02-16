@@ -5,13 +5,12 @@ using System.Reflection.Metadata;
 
 
 namespace Liella.TypeAnalysis.Metadata.Entry {
-    public class PointerTypeEntry : EntityEntryBase<PointerTypeEntry, PointerTypeEntryTag, EmptyDetails<PointerTypeEntry>>, ITypeEntry, IEntityEntry<PointerTypeEntry>
-    {
+    public class ReferenceTypeEntry : EntityEntryBase<ReferenceTypeEntry, ReferenceTypeEntryTag, EmptyDetails<ReferenceTypeEntry>>, ITypeEntry, IEntityEntry<ReferenceTypeEntry> {
 
 
-        public override string Name => $"{InvariantPart.BaseType.Name}*";
+        public override string Name => $"{InvariantPart.BaseType.Name}&";
 
-        public override string FullName => $"{InvariantPart.BaseType.FullName}*";
+        public override string FullName => $"{InvariantPart.BaseType.FullName}&";
         public ITypeEntry? BaseType => null;
         public override bool IsGenericInstantiation => InvariantPart.BaseType.IsGenericInstantiation;
 
@@ -29,32 +28,26 @@ namespace Liella.TypeAnalysis.Metadata.Entry {
         public IEnumerable<FieldDefEntry> TypeFields => throw new NotSupportedException();
         public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes
             => ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)>.Empty;
-        public PointerTypeEntry(TypeEnvironment typeEnv, in PointerTypeEntryTag tag) : base(typeEnv)
-        {
+        public ReferenceTypeEntry(TypeEnvironment typeEnv, in ReferenceTypeEntryTag tag) : base(typeEnv) {
             m_InvariantPart = new(tag.BaseType);
             DerivedType = [InvariantPart.BaseType];
         }
-        public override void ActivateEntry(TypeCollector collector)
-        {
+        public override void ActivateEntry(TypeCollector collector) {
             collector.NotifyEntity(InvariantPart.BaseType);
         }
 
-        public MethodDefEntry GetMethod(string name, in MethodSignature<ITypeEntry> signature, GenericTypeContext genericContext, bool throwOnNotFound = false)
-        {
+        public MethodDefEntry GetMethod(string name, in MethodSignature<ITypeEntry> signature, GenericTypeContext genericContext, bool throwOnNotFound = false) {
             throw new NotImplementedException();
         }
 
-        public FieldDefEntry GetField(string name)
-        {
+        public FieldDefEntry GetField(string name) {
             throw new NotImplementedException();
         }
 
-        public static PointerTypeEntry CreateFromKey(PointerTypeEntry key, TypeEnvironment typeEnv)
-        {
+        public static ReferenceTypeEntry CreateFromKey(ReferenceTypeEntry key, TypeEnvironment typeEnv) {
             return new(typeEnv, key.InvariantPart);
         }
-        public static PointerTypeEntry Create(EntityEntryManager manager, ITypeEntry baseType)
-        {
+        public static ReferenceTypeEntry Create(EntityEntryManager manager, ITypeEntry baseType) {
             return CreateEntry(manager, new(baseType));
         }
 

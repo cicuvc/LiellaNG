@@ -21,6 +21,7 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public ImmutableArray<ITypeEntry> LocalVariableTypes { get; private set; }
         public HashSet<ITypeDeriveSource> DerivedEntry { get; private set; }
         public MethodDefEntry? VirtualMethodPrototype { get; private set; }
+        public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes { get; private set; }
         public bool IsValid => Entry is not null;
 
         public void CreateDetails(MethodDefEntry entry)
@@ -68,6 +69,13 @@ namespace Liella.TypeAnalysis.Metadata.Entry
             Signature = MethodDef.DecodeSignature(typeEnv.SignDecoder, genericContext);
 
             DerivedEntry = [.. MethodGenericParams, .. Signature.ParameterTypes, .. LocalVariableTypes, Signature.ReturnType, entry.DeclType];
+
+            CustomAttributes = MethodDef.GetCustomAttributes().Select(e => {
+                var customAttribute = entry.AsmInfo.MetaReader.GetCustomAttribute(e);
+                var attribValue = customAttribute.DecodeValue(typeEnv.SignDecoder);
+                var ctor = (MethodDefEntry)typeEnv.TokenResolver.ResolveMethodToken(entry.AsmInfo, customAttribute.Constructor, GenericTypeContext.EmptyContext, out _);
+                return (ctor, arguments: attribValue);
+            }).ToImmutableArray();
 
             // A virtual override method
             if (MethodDef.Attributes.HasFlag(MethodAttributes.Virtual) && !MethodDef.Attributes.HasFlag(MethodAttributes.NewSlot))
@@ -122,8 +130,6 @@ namespace Liella.TypeAnalysis.Metadata.Entry
                             }
                         case OperandType.InlineMethod:
                             {
-                                if (Name.Contains("Main")) Debugger.Break();
-
                                 var methodToken = MetadataTokenHelpers.MakeEntityHandle((int)operand);
 
                                 var refMethod = typeEnv.TokenResolver.ResolveMethodToken(entry.AsmInfo, methodToken, genericContext, out var exactDeclType);

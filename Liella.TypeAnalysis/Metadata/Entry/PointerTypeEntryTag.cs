@@ -1,8 +1,7 @@
 ﻿using Liella.TypeAnalysis.Metadata.Elements;
 
 
-namespace Liella.TypeAnalysis.Metadata.Entry
-{
+namespace Liella.TypeAnalysis.Metadata.Entry {
     public struct PointerTypeEntryTag : IEquatable<PointerTypeEntryTag>
     {
         public ITypeEntry BaseType { get; }

@@ -7,6 +7,7 @@ using System.Reflection.Metadata;
 
 namespace Liella.TypeAnalysis.Metadata.Entry
 {
+    
     public struct TypeDefDetails : IDetails<TypeDefEntry>
     {
         public TypeAttributes Attributes { get; private set; }
@@ -22,6 +23,7 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public ImmutableArray<MethodDefEntry> VirtualMethods { get; private set; }
         //public ImmutableArray<PropertyDesc> Properties { get; }
         public HashSet<ITypeDeriveSource> DerivedEntry { get; private set; }
+        public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes { get; private set; }
         public bool IsValid => Entry is not null;
         public void CreateDetails(TypeDefEntry entry)
         {
@@ -70,13 +72,22 @@ namespace Liella.TypeAnalysis.Metadata.Entry
                     _ => BaseType.IsValueType
                 };
             } else {
-                if(Prototype.FullName == ".System.Object") {
+                if(Prototype.FullName == ".System.Object" || Prototype.FullName == ".<Module>") {
                     IsValueType = false;
+                } else {
+                    throw new NotSupportedException();
                 }
-                throw new NotSupportedException();
             }
 
             VirtualMethods = Methods.Where(e => e.GetDetails().MethodDef.Attributes.HasFlag(MethodAttributes.Virtual)).ToImmutableArray();
+
+            CustomAttributes = TypeDef.GetCustomAttributes().Select(e => {
+                var customAttribute = entry.AsmInfo.MetaReader.GetCustomAttribute(e);
+                var attribValue = customAttribute.DecodeValue(typeEnv.SignDecoder);
+                var ctor = (MethodDefEntry)typeEnv.TokenResolver.ResolveMethodToken(entry.AsmInfo, customAttribute.Constructor, GenericTypeContext.EmptyContext, out _);
+                return (ctor, arguments: attribValue);
+            }).ToImmutableArray();
+
         }
     }
 }

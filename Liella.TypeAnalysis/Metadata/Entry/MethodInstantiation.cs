@@ -1,5 +1,6 @@
 ﻿using Liella.TypeAnalysis.Metadata.Elements;
 using System.Collections.Immutable;
+using System.Reflection.Metadata;
 
 
 namespace Liella.TypeAnalysis.Metadata.Entry
@@ -28,6 +29,8 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public IEnumerable<ITypeEntry> ActualArguments => InvariantPart.MethodArguments;
 
         public IEntityEntry Definition => InvariantPart.Definition;
+        public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes
+            => InvariantPart.Definition.CustomAttributes;
         //public int TypeArgumentCount => TypeArguments.Length;
         //public int MethodArgumentCount => MethodArguments.Length;
         public bool IsPrimary => true;

@@ -27,6 +27,8 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public IEnumerable<MethodDefEntry> TypeMethods => throw new NotSupportedException();
 
         public IEnumerable<FieldDefEntry> TypeFields => throw new NotSupportedException();
+        public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes
+            => ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)>.Empty;
 
         private GenericPlaceholderTypeEntry(TypeEnvironment typeEnv, in GenericPlaceholderTag tag) : base(typeEnv)
         {

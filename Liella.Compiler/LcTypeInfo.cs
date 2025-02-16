@@ -1,5 +1,6 @@
 ﻿using Liella.Backend.Components;
 using Liella.Backend.Types;
+using Liella.Compiler;
 using Liella.TypeAnalysis.Metadata;
 using Liella.TypeAnalysis.Metadata.Elements;
 using Liella.TypeAnalysis.Metadata.Entry;
@@ -8,6 +9,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -84,23 +86,34 @@ namespace Liella.Backend.Compiler {
     }
     public class LcTypeDefInfo : LcTypeInfo {
         protected Dictionary<FieldDefEntry, (int offset, int index)> m_DataStorageLayout = new();
+        protected Dictionary<MethodDefEntry, LcMethodInfo> m_Methods = new();
         public ITypeEntry Entry { get; }
         public ICGenNamedStructType StaticStorage { get; }
         public ICGenNamedStructType DataStorage { get; }
         public ICGenType? InstanceType { get; protected set; }
         public override ICGenType? VirtualTableType => throw new NotImplementedException();
         public IReadOnlyDictionary<FieldDefEntry, (int offset, int index)> DataStorageLayout => m_DataStorageLayout;
-        public bool IsExplicitLayout { get; }
+        public IReadOnlyDictionary<MethodDefEntry, LcMethodInfo> Methods => m_Methods;
+        public LayoutKind Layout { get; }
         public bool IsTypeDefined { get; protected set; }
         public CodeGenContext CgContext { get; }
+        
         public LcTypeDefInfo(ITypeEntry entry, LcTypeContext typeContext, CodeGenContext cgContext) : base(typeContext) {
             Entry = entry;
 
             StaticStorage = cgContext.TypeFactory.CreateStruct($"static.{entry.FullName}");
             DataStorage = cgContext.TypeFactory.CreateStruct($"data.{entry.FullName}");
 
-            
-            IsExplicitLayout = Entry.Attributes.HasFlag(TypeAttributes.ExplicitLayout);
+            var layoutAttribute = Entry.CustomAttributes
+                .Where(e => e.ctor.DeclType.FullName == ".System.Runtime.InteropServices.StructLayoutAttribute")
+                .Select(e => (LayoutKind)e.arguments.FixedArguments[0].Value!)
+                .FirstOrDefault(Entry.IsValueType ? LayoutKind.Sequential : LayoutKind.Auto);
+
+            if(Entry.Attributes.HasFlag(TypeAttributes.ExplicitLayout)) {
+                Layout = LayoutKind.Explicit;
+            } else {
+                Layout = layoutAttribute;
+            }
 
             CgContext = cgContext;
         }
@@ -127,8 +140,7 @@ namespace Liella.Backend.Compiler {
 
             var dataStorageElements = new List<ICGenType>();
 
-            var isSequential = true;
-            if(IsExplicitLayout) {
+            if(Layout == LayoutKind.Explicit) {
                 throw new NotImplementedException();
             } else {
                 var dataStorageTypes = new List<(FieldDefEntry field, ICGenType type)>();
@@ -139,7 +151,7 @@ namespace Liella.Backend.Compiler {
                     dataStorageTypes.Add((i, Context.NativeTypeMap[i.FieldType].GetInstanceTypeEnsureDef()));
                 }
 
-                if(!isSequential)
+                if(Layout == LayoutKind.Auto)
                     LcTypeLayoutOptimizer.OptimizeLayout(baseStorage, dataStorageTypes);
 
                 var types = dataStorageTypes.Select(e => e.type);
@@ -149,6 +161,7 @@ namespace Liella.Backend.Compiler {
             InstanceType = Entry.IsValueType ? DataStorage : CgContext.TypeFactory.CreatePointer(DataStorage);
 
 
+            var currentEntry = Entry;
 
         }
 

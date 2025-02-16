@@ -1,4 +1,6 @@
-﻿using Liella.TypeAnalysis.Metadata;
+﻿using Liella.Backend.Components;
+using Liella.TypeAnalysis.Metadata;
+using Liella.Utils;
 using LLVMSharp.Interop;
 
 namespace Liella.Driver {
@@ -10,28 +12,9 @@ namespace Liella.Driver {
     }
     internal class App {
         static unsafe void Main(string[] args) {
-            var funcType = LLVMTypeRef.CreateFunction(LLVMTypeRef.Int32, []);
-            var jitModule = LLVMModuleRef.CreateWithName("eval");
-            var builder = jitModule.Context.CreateBuilder();
-            var func = jitModule.AddFunction("eval_0", funcType);
-            builder.PositionAtEnd(func.AppendBasicBlock("entry"));
+            LiLogger.Default.Info("Driver", "Compiler start");
 
-            var structType = LLVMTypeRef.CreateStruct([
-                LLVMTypeRef.Double, 
-                LLVMTypeRef.Int8, LLVMTypeRef.Int8, LLVMTypeRef.Int8,
-                ], false);
-            builder.BuildRet(structType.SizeOf);
-
-            
-            var jitEE = jitModule.CreateExecutionEngine();
-            var fnPtr = jitEE.RecompileAndRelinkFunction(func);
-            var value = jitEE.RunFunction(func, []);
-            Console.WriteLine(LLVM.GenericValueToInt(value, 1));
-            LLVM.DisposeGenericValue(value);
-
-
-
-            Environment.Exit(0);
+            var ba = CodeGenBackends.GetBackend("llvm");
 
             var stream = new FileStream("./Payload/Payload.dll", FileMode.Open);
             var icu = new ImageImporter(stream, (asmName) => {
@@ -40,6 +23,7 @@ namespace Liella.Driver {
 
             icu.BuildTypeEnvironment();
 
+            LiLogger.Default.Info("Driver", "Type collect complete");
 
             Console.ReadLine();
         }

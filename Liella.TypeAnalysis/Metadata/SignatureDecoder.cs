@@ -6,7 +6,7 @@ using System.Reflection.Metadata;
 
 namespace Liella.TypeAnalysis.Metadata
 {
-    public class SignatureDecoder : ISignatureTypeProvider<ITypeEntry, GenericTypeContext>
+    public class SignatureDecoder : ISignatureTypeProvider<ITypeEntry, GenericTypeContext>, ICustomAttributeTypeProvider<ITypeEntry>
     {
         public TypeEnvironment TypeEnv { get; }
         public SignatureDecoder(TypeEnvironment typeEnv)
@@ -20,7 +20,7 @@ namespace Liella.TypeAnalysis.Metadata
 
         public ITypeEntry GetByReferenceType(ITypeEntry elementType)
         {
-            throw new NotImplementedException();
+            return ReferenceTypeEntry.Create(TypeEnv.EntryManager, elementType);
         }
 
         public ITypeEntry GetFunctionPointerType(MethodSignature<ITypeEntry> signature)
@@ -82,6 +82,23 @@ namespace Liella.TypeAnalysis.Metadata
         public ITypeEntry GetTypeFromSpecification(MetadataReader reader, GenericTypeContext genericContext, TypeSpecificationHandle handle, byte rawTypeKind)
         {
             throw new NotImplementedException();
+        }
+
+        public ITypeEntry GetSystemType() {
+            throw new NotImplementedException();
+        }
+
+        public ITypeEntry GetTypeFromSerializedName(string name) {
+            throw new NotImplementedException();
+        }
+
+        public PrimitiveTypeCode GetUnderlyingEnumType(ITypeEntry type) {
+            var fieldType = (PrimitiveTypeEntry)type.GetField("value__").FieldType;
+            return fieldType.InvariantPart.TypeCode;
+        }
+
+        public bool IsSystemType(ITypeEntry type) {
+            return (type.FullName == ".System.Type@0");
         }
     }
 }

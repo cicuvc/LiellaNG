@@ -17,4 +17,8 @@
     <PackageReference Include="System.Reflection.Metadata" Version="8.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Liella.Utils\Liella.Utils.csproj" />
+  </ItemGroup>
+
 </Project>

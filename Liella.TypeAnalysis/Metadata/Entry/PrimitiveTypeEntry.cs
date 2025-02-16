@@ -31,7 +31,8 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public bool IsValueType => true;
         public IEnumerable<MethodDefEntry> TypeMethods => throw new NotSupportedException();
         public IEnumerable<FieldDefEntry> TypeFields => throw new NotSupportedException();
-
+        public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes
+            => ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)>.Empty;
         public PrimitiveTypeEntry(TypeEnvironment typeEnv, in PrimitiveTypeEntryTag code) : base(typeEnv)
         {
             m_InvariantPart = code;

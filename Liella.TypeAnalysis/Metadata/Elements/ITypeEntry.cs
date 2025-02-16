@@ -1,12 +1,15 @@
-﻿using System.Reflection;
+﻿using System.Collections.Immutable;
+using System.Reflection;
 using System.Reflection.Metadata;
 using Liella.TypeAnalysis.Metadata.Entry;
 
 
 namespace Liella.TypeAnalysis.Metadata.Elements
 {
-    public interface ITypeEntry : IEntityGenericContextEntry, ITypeDeriveSource, IEquatable<IEntityEntry>
-    {
+    public interface IAnnotationDecoratable {
+        ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes { get; }
+    }
+    public interface ITypeEntry : IEntityGenericContextEntry, ITypeDeriveSource, IEquatable<IEntityEntry>, IAnnotationDecoratable {
         TypeAttributes Attributes { get; }
         ITypeEntry? BaseType { get; }
 

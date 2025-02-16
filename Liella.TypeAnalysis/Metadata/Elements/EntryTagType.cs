@@ -11,6 +11,7 @@
         MethodInstEntry = 0x5,
 
         Primitive = 0x6,
-        Pointer = 0x7
+        Pointer = 0x7,
+        Reference = 0x8
     }
 }

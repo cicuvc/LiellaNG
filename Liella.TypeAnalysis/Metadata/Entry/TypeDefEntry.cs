@@ -25,6 +25,7 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public IEnumerable<MethodDefEntry> TypeMethods => Methods;
 
         public IEnumerable<FieldDefEntry> TypeFields => GetDetails().Fields;
+        public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes => GetDetails().CustomAttributes;
         private TypeDefEntry(TypeEnvironment typeEnv, in TypeDefEntryTag tag) : base(typeEnv)
         {
             m_InvariantPart = tag;
