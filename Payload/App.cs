@@ -11,6 +11,9 @@ namespace Payload
         public int A;
         public int B;
     }
+    public class GenericClass<T> {
+        public T Value;
+    }
     public unsafe class App {
         public static TestStruct Test(in TestStruct x) {
             var z = x;
@@ -18,6 +21,8 @@ namespace Payload
             return z;
         }
         public static void Main() {
+            new GenericClass<int>();
+
             var g = new TestStruct();
             Test(g);
             //Fuck<uint>.GNN<ulong>();

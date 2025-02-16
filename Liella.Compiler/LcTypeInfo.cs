@@ -145,6 +145,16 @@ namespace Liella.Backend.Compiler {
         public LcTypeInstInfo(TypeInstantiationEntry instEntry,TypeDefEntry defEntry, LcCompileContext typeContext, CodeGenContext cgContext) : base(defEntry, typeContext, cgContext) {
             TypeInstantiation = instEntry;
         }
+        protected override LcTypeInfo ResolveContextType(ITypeEntry entry) {
+            var realTypeEntry = entry;
+            if(entry is GenericPlaceholderTypeEntry placeholder) {
+                var placeholderIndex = Entry.TypeArguments.IndexOf(placeholder);
+                if(placeholderIndex < 0) throw new ArgumentException("Missing placeholder ???");
+
+                realTypeEntry = TypeInstantiation.InvariantPart.TypeArguments[placeholderIndex];
+            }
+            return base.ResolveContextType(realTypeEntry);
+        }
     }
     public class LcTypeDefInfo : LcTypeInfo {
         protected Dictionary<FieldDefEntry, (int offset, int index)> m_DataStorageLayout = new();
@@ -175,7 +185,9 @@ namespace Liella.Backend.Compiler {
 
             CgContext = cgContext;
         }
-
+        protected virtual LcTypeInfo ResolveContextType(ITypeEntry entry) {
+            return Context.NativeTypeMap[entry];
+        }
         protected override ICGenNamedStructType SetupDataStorage() {
             var dataStorageElements = new List<ICGenType>();
 
@@ -183,11 +195,11 @@ namespace Liella.Backend.Compiler {
                 throw new NotImplementedException();
             } else {
                 var dataStorageTypes = new List<(FieldDefEntry field, ICGenType type)>();
-                var baseStorage = Entry.BaseType is not null ? Context.NativeTypeMap[Entry.BaseType].GetDataStorageTypeEnsureDef() : null;
+                var baseStorage = Entry.BaseType is not null ? ResolveContextType(Entry.BaseType).GetDataStorageTypeEnsureDef() : null;
 
                 foreach(var i in Entry.TypeFields) {
                     if(i.Attributes.HasFlag(FieldAttributes.Static)) continue;
-                    dataStorageTypes.Add((i, Context.NativeTypeMap[i.FieldType].GetInstanceTypeEnsureDef()));
+                    dataStorageTypes.Add((i, ResolveContextType(i.FieldType).GetInstanceTypeEnsureDef()));
                 }
 
                 if(Layout == LayoutKind.Auto)

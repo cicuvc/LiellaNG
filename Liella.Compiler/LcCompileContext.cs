@@ -35,6 +35,8 @@ namespace Liella.Compiler
             foreach(var i in TypeEnv.Collector.ActivatedEntity) {
                 if(i is ITypeEntry typeEntry) {
                     if(typeEntry is TypeDefEntry typeDef) {
+                        if(typeDef.TypeArguments.Length > 0) continue;
+
                         m_NativeTypeMap.Add(typeEntry, new LcTypeDefInfo(typeDef, this, Context));
                     }else if(typeEntry is PrimitiveTypeEntry primEntry) {
                         m_NativeTypeMap.Add(typeEntry, new LcPrimitiveTypeInfo(primEntry.GetDetails().DefinitionType, primEntry, this, Context));
