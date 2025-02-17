@@ -34,6 +34,7 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public IEnumerable<MethodDefEntry> TypeMethods => InvariantPart.DefinitionType.TypeMethods;
 
         public IEnumerable<FieldDefEntry> TypeFields => InvariantPart.DefinitionType.TypeFields;
+        public IEnumerable<ITypeEntry> ImplInterfaces => InvariantPart.DefinitionType.ImplInterfaces;
         public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes
             => InvariantPart.DefinitionType.CustomAttributes;
         public TypeInstantiationEntry(TypeEnvironment typeEnv, in TypeInstantiationEntryTag tag) : base(typeEnv)

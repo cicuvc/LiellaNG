@@ -1,5 +1,6 @@
 ﻿using Liella.TypeAnalysis.Metadata.Elements;
 using Liella.TypeAnalysis.Namespaces;
+using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Reflection;
@@ -14,6 +15,7 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public TypeAttributes Attributes { get; private set; }
         public bool IsValueType { get; private set; }
         public bool IsEnum { get; private set; }
+        public bool IsInterface => Attributes.HasFlag(TypeAttributes.Interface);
         public string Name { get; private set; }
         public TypeNode Prototype { get; private set; }
         public TypeDefEntry Entry { get; private set; }
@@ -27,16 +29,18 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public HashSet<ITypeDeriveSource> DerivedEntry { get; private set; }
         public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes { get; private set; }
         public bool IsValid => Entry is not null;
+        public ImmutableArray<ITypeEntry> ImplInterfaces { get; private set; }
+        public FrozenDictionary<ITypeEntry, ImmutableArray<(IMethodEntry methodDecl, IMethodEntry methodImpl)>> InterfaceImpl { get; private set; }
         public void CreateDetails(TypeDefEntry entry)
         {
             var metaReader = entry.InvariantPart.AsmInfo.MetaReader;
             var typeDef = entry.InvariantPart.TypeDef;
             var typeEnv = entry.TypeEnv;
-
+            
             Entry = entry;
             TypeDef = metaReader.GetTypeDefinition(typeDef);
 
-            Attributes = entry.Attributes;
+            Attributes = TypeDef.Attributes;
             Name = metaReader.GetString(TypeDef.Name);
 
             Prototype = typeEnv.NamespaceTree[entry.InvariantPart.AsmInfo.Token].TypeNodes[typeDef];
@@ -56,28 +60,35 @@ namespace Liella.TypeAnalysis.Metadata.Entry
                 return MethodDefEntry.Create(typeEnv.EntryManager, entry.AsmInfo, e);
             }).ToImmutableArray();
 
+            var genericContext = new GenericTypeContext(TypeArguments, ImmutableArray<ITypeEntry>.Empty);
 
-            DerivedEntry = [.. TypeArguments, .. Fields.Select(e => e.GetDetails().FieldType)];
+            ImplInterfaces = TypeDef.GetInterfaceImplementations().Select(e => {
+                var impl = entry.AsmInfo.MetaReader.GetInterfaceImplementation(e);
+                return typeEnv.TokenResolver.ResolveTypeToken(entry.AsmInfo, impl.Interface, genericContext);
+            }).Distinct().ToImmutableArray();
 
 
+            DerivedEntry = [.. TypeArguments,.. ImplInterfaces,.. Fields.Select(e => e.GetDetails().FieldType)];
 
             if (!TypeDef.BaseType.IsNil)
             {
-                BaseType = typeEnv.TokenResolver.ResolveTypeToken(entry.AsmInfo, TypeDef.BaseType, new GenericTypeContext(TypeArguments, []));
+                BaseType = typeEnv.TokenResolver.ResolveTypeToken(entry.AsmInfo, TypeDef.BaseType, genericContext);
                 DerivedEntry.Add(BaseType);
             }
 
 
-            if(BaseType is TypeDefEntry baseEntry) {
-                var baseFullName = baseEntry.GetDetails().Prototype.FullName;
+            if(BaseType is ITypeEntry baseEntry) {
+                var baseFullName = baseEntry.FullName;
                 IsValueType = baseFullName switch {
-                    ".System.Enum" => true,
-                    ".System.ValueType" => true,
+                    ".System.Enum@0" => true,
+                    ".System.ValueType@0" => true,
                     _ => BaseType.IsValueType
                 };
-                IsEnum = baseFullName == ".System.Enum";
+                IsEnum = baseFullName == ".System.Enum@0";
             } else {
                 if(Prototype.FullName == ".System.Object" || Prototype.FullName == ".<Module>") {
+                    IsValueType = false;
+                } else if (Attributes.HasFlag(TypeAttributes.Interface)){
                     IsValueType = false;
                 } else {
                     throw new NotSupportedException();
@@ -93,6 +104,71 @@ namespace Liella.TypeAnalysis.Metadata.Entry
                 return (ctor, arguments: attribValue);
             }).ToImmutableArray();
 
+            // Handle special method impl resolution
+
+            if(!IsInterface) {
+                var interfaceImpls = ImplInterfaces.ToDictionary(e => e, e => new List<(IMethodEntry methodDecl, IMethodEntry methodImpl)>());
+
+                foreach(var i in TypeDef.GetMethodImplementations()) {
+                    var impl = entry.AsmInfo.MetaReader.GetMethodImplementation(i);
+
+                    var methodBody = typeEnv.TokenResolver.ResolveMethodToken(entry.AsmInfo, impl.MethodBody, new(entry.TypeArguments, entry.MethodArguments), out var exactDecl);
+                    var methodDecl = typeEnv.TokenResolver.ResolveMethodToken(entry.AsmInfo, impl.MethodDeclaration, new(entry.TypeArguments, entry.MethodArguments), out var exactMethodDecl);
+
+                    if(!interfaceImpls.TryGetValue(exactMethodDecl, out var implList)) {
+                        interfaceImpls.Add(exactMethodDecl, implList = new());
+                    }
+                    implList.Add((methodDecl, methodImpl: methodBody));
+                }
+
+                foreach(var interfaceType in ImplInterfaces) {
+                    var implList = interfaceImpls[interfaceType];
+                    var genericLookupTable = interfaceType is TypeInstantiationEntry interfaceInst ? 
+                        interfaceInst.FormalArguments.Zip(interfaceInst.ActualArguments)
+                        .ToFrozenDictionary(e => e.First, e => e.Second) 
+                        : FrozenDictionary<ITypeEntry, ITypeEntry>.Empty;
+
+
+                    foreach(var j in interfaceType.TypeMethods) {
+                        if(implList.Any(e => e.methodDecl == j)) continue;
+
+                        // All generics used in interface declared methods are present in interface declared generics
+                        var targetSignature = SubsituteSignauture(genericLookupTable, j.GetDetails().Signature);
+                        var localMethod = FindInterfaceImplMethodInList(Methods, j.Name, targetSignature, genericContext);
+
+                        if(localMethod is null) {
+                            var baseType = BaseType;
+                            while((baseType is not null) && (localMethod is null)) {
+                                localMethod = FindInterfaceImplMethodInList(baseType.TypeMethods, j.Name, targetSignature, genericContext);
+                                baseType = baseType.BaseType;
+                            }
+                        }
+
+                        if(localMethod is not null) {
+                            implList.Add((j, localMethod));
+                        } else {
+                            throw new NotSupportedException("Unknown impl");
+                        }
+                    }
+                }
+            }
+
+        }
+        private static MethodSignature<ITypeEntry> SubsituteSignauture(IReadOnlyDictionary<ITypeEntry, ITypeEntry> lut, MethodSignature<ITypeEntry> signature) {
+            return new MethodSignature<ITypeEntry>(
+                signature.Header, 
+                lut.GetValueOrDefault(signature.ReturnType, signature.ReturnType), 
+                signature.RequiredParameterCount, 
+                signature.GenericParameterCount, 
+                signature.ParameterTypes.Select(e => lut.GetValueOrDefault(e, e)).ToImmutableArray());
+        }
+
+        private static IMethodEntry? FindInterfaceImplMethodInList(IEnumerable<MethodDefEntry> methods, string name, MethodSignature<ITypeEntry> signature, GenericTypeContext genericContext) {
+            foreach(var i in methods) {
+                if(i.Name != name) continue;
+                if(i.IsMatchSignature(signature, genericContext)) return i;
+            }
+            return null;
         }
     }
 }

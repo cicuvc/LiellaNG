@@ -33,6 +33,9 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public IEnumerable<FieldDefEntry> TypeFields => throw new NotSupportedException();
         public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes
             => ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)>.Empty;
+        // Since a primitive type cannot be inherit or implement, nobody try to get impl interface before codegen stage
+        public IEnumerable<ITypeEntry> ImplInterfaces => throw new NotImplementedException(); 
+        
         public PrimitiveTypeEntry(TypeEnvironment typeEnv, in PrimitiveTypeEntryTag code) : base(typeEnv)
         {
             m_InvariantPart = code;

@@ -30,6 +30,8 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes
             => ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)>.Empty;
 
+        public IEnumerable<ITypeEntry> ImplInterfaces => Enumerable.Empty<ITypeEntry>();
+
         private GenericPlaceholderTypeEntry(TypeEnvironment typeEnv, in GenericPlaceholderTag tag) : base(typeEnv)
         {
             m_InvariantPart = tag;

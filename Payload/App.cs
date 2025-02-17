@@ -13,6 +13,22 @@ namespace Payload
     }
     public class GenericClass<T> {
         public T Value;
+        public void GenericFunc() { }
+    }
+    public interface I0<T,K> {
+        T Func0(K x);
+    }
+    public interface IA<T> :I0<T,int> {
+
+    }
+    public class ClassA<T> {
+        public T Func0(int x) {
+            throw new Exception();
+        }
+        public void Func1() { }
+    }
+    public class ClassB<T>: ClassA<T>, IA<T> {
+        
     }
     public unsafe class App {
         public static TestStruct Test(in TestStruct x) {
@@ -21,7 +37,10 @@ namespace Payload
             return z;
         }
         public static void Main() {
-            new GenericClass<int>();
+            var z = new GenericClass<int>();
+            z.GenericFunc();
+
+            new ClassB<int>();
 
             var g = new TestStruct();
             Test(g);

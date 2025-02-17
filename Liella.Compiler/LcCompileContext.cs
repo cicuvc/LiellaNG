@@ -36,7 +36,6 @@ namespace Liella.Compiler
                 if(i is ITypeEntry typeEntry) {
                     if(typeEntry is TypeDefEntry typeDef) {
                         if(typeDef.TypeArguments.Length > 0) continue;
-
                         m_NativeTypeMap.Add(typeEntry, new LcTypeDefInfo(typeDef, this, Context));
                     }else if(typeEntry is PrimitiveTypeEntry primEntry) {
                         m_NativeTypeMap.Add(typeEntry, new LcPrimitiveTypeInfo(primEntry.GetDetails().DefinitionType, primEntry, this, Context));
@@ -58,6 +57,23 @@ namespace Liella.Compiler
                 Console.WriteLine($"{type.Entry}: {type.GetInstanceTypeEnsureDef()}");
                 
             }
+
+            foreach(var i in TypeEnv.Collector.ActivatedEntity) {
+                if(i is IMethodEntry methodEntry) {
+                    var exactDeclType = methodEntry.DeclType;
+
+                    if(exactDeclType.TypeArguments.Length > 0) {
+                        if(methodEntry is MethodInstantiation mi) {
+                            exactDeclType = mi.ExactDeclType;
+                        } else {
+                            continue;
+                        }
+                    }
+
+                    var methodInfo = new LcMethodInfo(NativeTypeMap[exactDeclType], methodEntry);
+                }
+            }
+
         }
     }
 }

@@ -29,6 +29,8 @@ namespace Liella.TypeAnalysis.Metadata.Entry {
         public IEnumerable<FieldDefEntry> TypeFields => throw new NotSupportedException();
         public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes
             => ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)>.Empty;
+
+        public IEnumerable<ITypeEntry> ImplInterfaces => Enumerable.Empty<ITypeEntry>();
         public PointerTypeEntry(TypeEnvironment typeEnv, in PointerTypeEntryTag tag) : base(typeEnv)
         {
             m_InvariantPart = new(tag.BaseType);

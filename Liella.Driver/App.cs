@@ -5,12 +5,6 @@ using Liella.Utils;
 using LLVMSharp.Interop;
 
 namespace Liella.Driver {
-    class A {
-        public static int X;
-    }
-    class B : A {
-
-    }
     internal class App {
         static unsafe void Main(string[] args) {
             LiLogger.Default.Info("Driver", "Compiler start");
