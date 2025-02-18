@@ -12,6 +12,7 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public override string Name => $"{GetDetails().Name}@{TypeArguments.Length}";
         public override string FullName => $"{GetDetails().Prototype.FullName}@{TypeArguments.Length}";
         public override bool IsGenericInstantiation => false;
+        public bool IsInterface => Attributes.HasFlag(TypeAttributes.Interface);
         public override AssemblyReaderTuple AsmInfo => m_InvariantPart.AsmInfo;
 
         public ImmutableArray<ITypeEntry> TypeArguments => GetDetails().TypeArguments;

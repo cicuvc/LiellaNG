@@ -1,5 +1,7 @@
 ﻿using Liella.TypeAnalysis.Metadata.Elements;
+using Liella.TypeAnalysis.Utils;
 using System.Collections.Immutable;
+using System.Reflection;
 using System.Reflection.Metadata;
 
 
@@ -29,6 +31,9 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public IEnumerable<ITypeEntry> ActualArguments => InvariantPart.MethodArguments;
 
         public IEntityEntry Definition => InvariantPart.Definition;
+        public ILDecoder Decoder => InvariantPart.Definition.Decoder;
+        public MethodSignature<ITypeEntry> Signature => InvariantPart.Definition.Signature;
+        public MethodAttributes Attributes => InvariantPart.Definition.Attributes;
         public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes
             => InvariantPart.Definition.CustomAttributes;
         //public int TypeArgumentCount => TypeArguments.Length;

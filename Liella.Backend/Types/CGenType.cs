@@ -90,6 +90,7 @@ namespace Liella.Backend.Types
         public abstract ICGenNumericType Float64 { get; }
         public abstract ICGenType Void { get; }
         public abstract ICGenType Int1 { get; }
+        public abstract ICGenType VoidPtr { get; }
 
         public abstract ICGenNamedStructType CreateStruct(string name);
         public abstract ICGenStructType CreateStruct(ReadOnlySpan<ICGenType> types, string? name = null);

@@ -1,4 +1,5 @@
 ﻿using Liella.TypeAnalysis.Metadata.Elements;
+using Liella.TypeAnalysis.Utils;
 using System.Collections.Immutable;
 using System.Reflection;
 using System.Reflection.Metadata;
@@ -18,7 +19,9 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public ImmutableArray<ITypeEntry> MethodArguments => GetDetails().MethodGenericParams;
         public IEnumerable<ITypeDeriveSource> DerivedType => GetDetails().DerivedEntry;
         public MethodAttributes Attriutes => GetDetails().MethodDef.Attributes;
-
+        public ILDecoder Decoder => GetDetails().ILCode;
+        public MethodSignature<ITypeEntry> Signature => GetDetails().Signature;
+        public MethodAttributes Attributes => GetDetails().Attributes;
         public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes => GetDetails().CustomAttributes;
 
         private MethodDefEntry(TypeEnvironment typeEnv, in MethodDefTag tag) : base(typeEnv)

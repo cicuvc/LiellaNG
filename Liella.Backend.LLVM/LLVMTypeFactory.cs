@@ -14,6 +14,7 @@ namespace Liella.Backend.LLVM {
 
         public override ICGenType Void { get; }
         public override ICGenType Int1 { get; }
+        public override ICGenType VoidPtr { get; }
 
         public LLVMTypeFactory(CodeGenContext context)
         {
@@ -24,6 +25,7 @@ namespace Liella.Backend.LLVM {
             Float64 = LLVMNumericType.CreateFloat64(Manager);
             Void = LLVMVoidType.Create(Manager);
             Int1 = LLVMNumericType.CreateInt(1, Manager);
+            VoidPtr = LLVMPointerType.Create(Void, 0, Manager);
         }
 
         public override ICGenArrayType CreateArray(ICGenType elementType, int elementCount)

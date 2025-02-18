@@ -1,4 +1,5 @@
-﻿using Liella.Backend.Types;
+﻿using Liella.Backend.Components;
+using Liella.Backend.Types;
 using Liella.Compiler;
 using Liella.TypeAnalysis.Metadata;
 using Liella.TypeAnalysis.Metadata.Elements;
@@ -31,21 +32,25 @@ namespace Liella.Backend.Compiler {
         DataStoragePending = 0x8,
         DataStorageComplete = 0x10,
         StaticStoragePending = 0x20,
-        StaticStorageComplete = 0x40
+        StaticStorageComplete = 0x40,
+
+        VTablePending = 0x80,
+        VTableComplete = 0x100
     }
     public abstract class LcTypeInfo {
         protected ICGenType? m_InstanceType;
         protected ICGenNamedStructType? m_DataStorageType;
         protected ICGenNamedStructType? m_StaticStorageType;
+        protected ICGenNamedStructType? m_VTableType;
+        protected CodeGenValue? m_VTableStoragePtr;
         protected List<LcMethodInfo> m_Methods = new();
         public ITypeEntry Entry { get; }
         public LcTypeInitStage InitState { get; protected set; }
         public LcCompileContext Context { get; }
         public abstract bool IsStorageRequired { get; }
-        public abstract ICGenType? VirtualTableType { get; }
         public IReadOnlyList<LcMethodInfo> Methods => m_Methods;
 
-
+        public abstract LcTypeInfo? ResolveContextType(ITypeEntry entry);
         public ICGenType GetInstanceTypeEnsureDef() {
             if(!CheckTypeInitialized(LcTypeInitStage.InstancePending, LcTypeInitStage.InstanceComplete)) {
                 m_InstanceType = SetupInstanceType();
@@ -69,9 +74,18 @@ namespace Liella.Backend.Compiler {
             }
             return m_StaticStorageType!;
         }
+        public CodeGenValue GetVTablePtr() {
+            if(!IsStorageRequired) throw new NotSupportedException();
+            if(!CheckTypeInitialized(LcTypeInitStage.VTablePending, LcTypeInitStage.VTableComplete)) {
+                m_VTableStoragePtr = SetupVirtualTable();
+                SetTypeInitialized(LcTypeInitStage.VTablePending, LcTypeInitStage.VTableComplete);
+            }
+            return m_VTableStoragePtr!;
+        }
         protected abstract ICGenType SetupInstanceType();
         protected abstract ICGenNamedStructType SetupDataStorage();
         protected abstract ICGenNamedStructType SetupStaticStorage();
+        protected abstract CodeGenValue SetupVirtualTable();
         protected bool CheckTypeInitialized(LcTypeInitStage pending, LcTypeInitStage complete) {
             if(InitState.HasFlag(complete)) return true;
             if(InitState.HasFlag(pending)) {

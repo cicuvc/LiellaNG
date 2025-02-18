@@ -30,20 +30,13 @@ namespace Payload
     public class ClassB<T>: ClassA<T>, IA<T> {
         
     }
+
     public unsafe class App {
-        public static TestStruct Test(in TestStruct x) {
-            var z = x;
-            z.A = 12;
-            return z;
+        public static void CallMethod(IA<int> x) {
+            x.Func0(12);
         }
         public static void Main() {
-            var z = new GenericClass<int>();
-            z.GenericFunc();
-
-            new ClassB<int>();
-
-            var g = new TestStruct();
-            Test(g);
+            CallMethod(new ClassB<int>());
             //Fuck<uint>.GNN<ulong>();
             //var generic = new NestGeneric<short>.Nested<int>();
             //generic.NestGeneric<long>();

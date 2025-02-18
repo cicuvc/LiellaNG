@@ -5,19 +5,35 @@ using Liella.TypeAnalysis.Metadata.Elements;
 using Liella.TypeAnalysis.Metadata.Entry;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Liella.Compiler
 {
+    public struct TypeEntryComparer : IEqualityComparer<ITypeEntry> {
+        public bool Equals(ITypeEntry? x, ITypeEntry? y) {
+            if(x is TypeInstantiationEntry xInst) {
+                if(y is TypeInstantiationEntry yInst) {
+                    return xInst.InvariantPart.DefinitionType == yInst.InvariantPart.DefinitionType &&
+                        xInst.InvariantPart.TypeArguments.SequenceEqual(yInst.InvariantPart.TypeArguments);
+                }
+            }
+            return x?.Equals(y) ?? false;
+        }
+
+        public int GetHashCode([DisallowNull] ITypeEntry obj) {
+            return obj.GetHashCode();
+        }
+    }
     public class LcCompileContext {
         public TypeEnvironment TypeEnv { get; }
         public CodeGenModule Module { get; }
         public CodeGenFactory Backend { get; }
         public CodeGenContext Context { get; }
         public IReadOnlyDictionary<ITypeEntry, LcTypeInfo> NativeTypeMap => m_NativeTypeMap;
-        protected Dictionary<ITypeEntry, LcTypeInfo> m_NativeTypeMap = new();
+        protected Dictionary<ITypeEntry, LcTypeInfo> m_NativeTypeMap = new(new TypeEntryComparer());
 
         public LcCompileContext(TypeEnvironment typeEnv, string projName, string target, string backend = "llvm") {
             TypeEnv = typeEnv;
@@ -31,6 +47,7 @@ namespace Liella.Compiler
             Module = Backend.CreateModule(projName, target);
             Context = Module.Context;
         }
+
         public void StartCompilation() {
             foreach(var i in TypeEnv.Collector.ActivatedEntity) {
                 if(i is ITypeEntry typeEntry) {
@@ -70,9 +87,14 @@ namespace Liella.Compiler
                         }
                     }
 
-                    var methodInfo = new LcMethodInfo(NativeTypeMap[exactDeclType], methodEntry);
+                    var typeInfo = NativeTypeMap[exactDeclType];
+                    var methodInfo = new LcMethodInfo(typeInfo, methodEntry, this, Context);
+
+                    typeInfo.RegisterMethod(methodInfo);
                 }
             }
+
+            
 
         }
     }

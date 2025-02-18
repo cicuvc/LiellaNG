@@ -18,7 +18,7 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public override int GetHashCode()
         {
             var hashCode = new HashCode();
-            hashCode.Add(IsPrimary);
+            //hashCode.Add(IsPrimary);
             hashCode.Add(DefinitionType);
             foreach (var i in TypeArguments)
                 hashCode.Add(i);
@@ -26,7 +26,7 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         }
         public bool Equals(TypeInstantiationEntryTag other)
         {
-            return other.DefinitionType.Equals(DefinitionType) && other.TypeArguments.SequenceEqual(TypeArguments) && IsPrimary == other.IsPrimary;
+            return other.DefinitionType.Equals(DefinitionType) && other.TypeArguments.SequenceEqual(TypeArguments) && (IsPrimary == other.IsPrimary);
         }
     }
 }

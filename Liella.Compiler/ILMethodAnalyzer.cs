@@ -42,6 +42,8 @@ namespace Liella.Backend.Compiler {
             var candidateEnd = new Dictionary<int, (FlowControl flow, int trueExit, int falseExit)>();
             var blocks = new Dictionary<int, ILMethodBasicBlock>();
 
+            candidateStart.Add((0, true));
+
             for(var i = 0; i < decoder.Instructions.Length; i++) {
                 var (ilCode, operand) = decoder.Instructions[i];
                 var codeInfo = opCodeMap[ilCode];
@@ -68,7 +70,7 @@ namespace Liella.Backend.Compiler {
                 }
             }
 
-            foreach(var i in candidateEnd) candidateStart.Add((i.Key, false));
+            foreach(var i in candidateEnd) candidateStart.Add((i.Key + 1, false));
             var sections = candidateStart.ToList();
             sections.Sort((u, v) => {
                 if(u.index == v.index) return (u.isStart ? 1 : -1);
@@ -92,7 +94,7 @@ namespace Liella.Backend.Compiler {
 
             foreach(var i in m_Edges.Keys) {
                 var endIndex = i.EndIndex;
-                var endInfo = candidateEnd[endIndex];
+                var endInfo = candidateEnd[endIndex - 1];
 
                 if(endInfo.trueExit >= 0) {
                     AddEdge(i, i.TrueExit = blocks[endInfo.trueExit], true);

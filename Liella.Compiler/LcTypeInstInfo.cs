@@ -30,7 +30,7 @@ namespace Liella.Backend.Compiler {
             m_GenericSubstitutionMap = instEntry.FormalArguments.Zip(instEntry.ActualArguments).ToFrozenDictionary(e => e.First, e => e.Second);
         }
         // [TODO] Support type substitute
-        protected override LcTypeInfo ResolveContextType(ITypeEntry entry) {
+        public override LcTypeInfo? ResolveContextType(ITypeEntry entry) {
             var realTypeEntry = SubstituteGenericEntry(entry);
             return base.ResolveContextType(realTypeEntry);
         }

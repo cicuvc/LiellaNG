@@ -23,19 +23,16 @@ using System.Runtime.InteropServices;
 namespace Liella.Backend.Compiler {
     public class LcTypeDefInfo : LcTypeInfo {
         protected Dictionary<FieldDefEntry, (int offset, int index)> m_DataStorageLayout = new();
-        protected Dictionary<MethodDefEntry, LcMethodInfo> m_Methods = new();
         public override bool IsStorageRequired => true;
         public ICGenType? InstanceType { get; protected set; }
-        public override ICGenType? VirtualTableType => throw new NotImplementedException();
         public IReadOnlyDictionary<FieldDefEntry, (int offset, int index)> DataStorageLayout => m_DataStorageLayout;
-        public IReadOnlyDictionary<MethodDefEntry, LcMethodInfo> Methods => m_Methods;
         public LayoutKind Layout { get; }
         public CodeGenContext CgContext { get; }
         
         public LcTypeDefInfo(TypeDefEntry entry, LcCompileContext typeContext, CodeGenContext cgContext) : base(entry, typeContext) {
-
             m_StaticStorageType = cgContext.TypeFactory.CreateStruct($"static.{entry.FullName}");
             m_DataStorageType = cgContext.TypeFactory.CreateStruct($"data.{entry.FullName}");
+            m_VTableType = cgContext.TypeFactory.CreateStruct($"vtable.{entry.FullName}");
 
             var layoutAttribute = Entry.CustomAttributes
                 .Where(e => e.ctor.DeclType.FullName == ".System.Runtime.InteropServices.StructLayoutAttribute")
@@ -50,8 +47,8 @@ namespace Liella.Backend.Compiler {
 
             CgContext = cgContext;
         }
-        protected virtual LcTypeInfo ResolveContextType(ITypeEntry entry) {
-            return Context.NativeTypeMap[entry];
+        public override LcTypeInfo ResolveContextType(ITypeEntry entry) {
+            return Context.NativeTypeMap.GetValueOrDefault(entry,null!);
         }
         protected override ICGenNamedStructType SetupDataStorage() {
             var dataStorageElements = new List<ICGenType>();
@@ -82,6 +79,9 @@ namespace Liella.Backend.Compiler {
                     return Context.NativeTypeMap[fieldType].GetInstanceTypeEnsureDef();
                 }
             }
+            if(Entry.Attributes.HasFlag(TypeAttributes.Interface)) {
+                return CgContext.TypeFactory.CreateStruct([CgContext.TypeFactory.VoidPtr, CgContext.TypeFactory.CreatePointer(m_VTableType!)]);
+            }
             return Entry.IsValueType ? m_DataStorageType! : CgContext.TypeFactory.CreatePointer(m_DataStorageType!);
         }
         protected override ICGenNamedStructType SetupStaticStorage() {
@@ -90,6 +90,10 @@ namespace Liella.Backend.Compiler {
                .Where(e => e.Attributes.HasFlag(FieldAttributes.Static))
                .Select(e => Context.NativeTypeMap[e.FieldType].GetInstanceTypeEnsureDef()).ToArray());
             return m_StaticStorageType;
+        }
+
+        protected override CodeGenValue SetupVirtualTable() {
+            throw new NotImplementedException();
         }
     }
 }

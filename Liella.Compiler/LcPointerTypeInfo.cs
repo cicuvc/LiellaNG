@@ -25,7 +25,6 @@ namespace Liella.Backend.Compiler {
         public bool IsPointer { get; }
         public CodeGenContext CgContext { get; }
         public ITypeEntry ElementEntry { get; }
-        public override ICGenType? VirtualTableType => throw new NotImplementedException();
         public LcPointerTypeInfo(ITypeEntry entry, LcCompileContext typeContext, CodeGenContext cgContext) :base(entry, typeContext) {
             CgContext = cgContext;
 
@@ -46,5 +45,12 @@ namespace Liella.Backend.Compiler {
             => throw new NotSupportedException();
         protected override ICGenNamedStructType SetupStaticStorage()
             => throw new NotSupportedException();
+        protected override CodeGenValue SetupVirtualTable() {
+            throw new NotSupportedException();
+        }
+
+        public override LcTypeInfo? ResolveContextType(ITypeEntry entry) {
+            throw new NotImplementedException();
+        }
     }
 }

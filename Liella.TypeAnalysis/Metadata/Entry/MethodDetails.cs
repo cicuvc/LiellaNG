@@ -14,7 +14,7 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public MethodDefEntry Entry { get; private set; }
         public TypeDefEntry DeclType { get; private set; }
         public MethodDefinition MethodDef { get; private set; }
-        public ILDecoder? ILCode { get; private set; }
+        public ILDecoder ILCode { get; private set; }
         public string Name { get; private set; }
         public MethodSignature<ITypeEntry> Signature { get; private set; }
         public ImmutableArray<ITypeEntry> MethodGenericParams { get; private set; }
@@ -23,6 +23,7 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public MethodDefEntry? VirtualMethodPrototype { get; private set; }
         public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes { get; private set; }
         public bool IsValid => Entry is not null;
+        public MethodAttributes Attributes { get; private set; }
 
         public void CreateDetails(MethodDefEntry entry)
         {
@@ -38,6 +39,7 @@ namespace Liella.TypeAnalysis.Metadata.Entry
             MethodDef = metaReader.GetMethodDefinition(entry.InvariantPart.MethodDef);
 
             DeclType = TypeDefEntry.Create(typeEnv.EntryManager, entry.AsmInfo, MethodDef.GetDeclaringType());
+            Attributes = MethodDef.Attributes;
 
             Name = metaReader.GetString(MethodDef.Name);
 
