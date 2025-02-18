@@ -30,10 +30,10 @@ namespace Liella.Backend.Compiler {
             CgContext = cgContext;
 
             if(entry is PointerTypeEntry pointer) {
-                ElementEntry = pointer.InvariantPart.BaseType;
+                ElementEntry = pointer.InvariantPart.ElementType;
                 IsPointer = true;
             } else if(entry is ReferenceTypeEntry reference) {
-                ElementEntry = reference.InvariantPart.BaseType;
+                ElementEntry = reference.InvariantPart.ElementType;
                 IsPointer = false;
             } else throw new NotSupportedException();
         }

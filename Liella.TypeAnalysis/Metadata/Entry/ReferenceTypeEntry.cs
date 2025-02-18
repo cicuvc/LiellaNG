@@ -8,17 +8,17 @@ namespace Liella.TypeAnalysis.Metadata.Entry {
     public class ReferenceTypeEntry : EntityEntryBase<ReferenceTypeEntry, ReferenceTypeEntryTag, EmptyDetails<ReferenceTypeEntry>>, ITypeEntry, IEntityEntry<ReferenceTypeEntry> {
 
 
-        public override string Name => $"{InvariantPart.BaseType.Name}&";
+        public override string Name => $"{InvariantPart.ElementType.Name}&";
 
-        public override string FullName => $"{InvariantPart.BaseType.FullName}&";
+        public override string FullName => $"{InvariantPart.ElementType.FullName}&";
         public ITypeEntry? BaseType => null;
-        public override bool IsGenericInstantiation => InvariantPart.BaseType.IsGenericInstantiation;
+        public override bool IsGenericInstantiation => InvariantPart.ElementType.IsGenericInstantiation;
 
-        public override AssemblyReaderTuple AsmInfo => InvariantPart.BaseType.AsmInfo;
+        public override AssemblyReaderTuple AsmInfo => InvariantPart.ElementType.AsmInfo;
 
-        public ImmutableArray<ITypeEntry> TypeArguments => InvariantPart.BaseType.TypeArguments;
+        public ImmutableArray<ITypeEntry> TypeArguments => InvariantPart.ElementType.TypeArguments;
 
-        public ImmutableArray<ITypeEntry> MethodArguments => InvariantPart.BaseType.MethodArguments;
+        public ImmutableArray<ITypeEntry> MethodArguments => InvariantPart.ElementType.MethodArguments;
 
         public IEnumerable<ITypeDeriveSource> DerivedType { get; }
         public TypeAttributes Attributes => (TypeAttributes)0;
@@ -30,11 +30,11 @@ namespace Liella.TypeAnalysis.Metadata.Entry {
             => ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)>.Empty;
         public IEnumerable<ITypeEntry> ImplInterfaces => Enumerable.Empty<ITypeEntry>();
         public ReferenceTypeEntry(TypeEnvironment typeEnv, in ReferenceTypeEntryTag tag) : base(typeEnv) {
-            m_InvariantPart = new(tag.BaseType);
-            DerivedType = [InvariantPart.BaseType];
+            m_InvariantPart = new(tag.ElementType);
+            DerivedType = [InvariantPart.ElementType];
         }
         public override void ActivateEntry(TypeCollector collector) {
-            collector.NotifyEntity(InvariantPart.BaseType);
+            collector.NotifyEntity(InvariantPart.ElementType);
         }
 
         public MethodDefEntry GetMethod(string name, in MethodSignature<ITypeEntry> signature, GenericTypeContext genericContext, bool throwOnNotFound = false) {
