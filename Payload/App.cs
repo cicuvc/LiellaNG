@@ -15,14 +15,14 @@ namespace Payload
         public T Value;
         public void GenericFunc() { }
     }
-    public interface I0<T,K> {
-        T Func0(K x);
+    public interface I0<T> {
+        T Func0<W>(W x);
     }
-    public interface IA<T> :I0<T,int> {
+    public interface IA<T> :I0<T> {
 
     }
     public class ClassA<T> {
-        public T Func0(int x) {
+        public T Func0<W>(W x) {
             throw new Exception();
         }
         public void Func1() { }

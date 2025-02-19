@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -34,7 +35,7 @@ namespace Liella.Compiler
         public CodeGenContext Context { get; }
         public IReadOnlyDictionary<ITypeEntry, LcTypeInfo> NativeTypeMap => m_NativeTypeMap;
         protected Dictionary<ITypeEntry, LcTypeInfo> m_NativeTypeMap = new(new TypeEntryComparer());
-
+        protected Dictionary<IMethodEntry, LcMethodInfo> m_MethodMap = new();
         public LcCompileContext(TypeEnvironment typeEnv, string projName, string target, string backend = "llvm") {
             TypeEnv = typeEnv;
 
@@ -88,12 +89,20 @@ namespace Liella.Compiler
                     }
 
                     var typeInfo = NativeTypeMap[exactDeclType];
-                    var methodInfo = new LcMethodInfo(typeInfo, methodEntry, this, Context);
 
+                    var methodInfo = (methodEntry is MethodInstantiation methodInst) ?
+                        new LcMethodInst(typeInfo, methodInst, this, Context)
+                        : new LcMethodInfo(typeInfo, methodEntry, this, Context);
+
+                    m_MethodMap.Add(methodEntry, methodInfo);
                     typeInfo.RegisterMethod(methodInfo);
+
                 }
             }
 
+            foreach(var (k,v) in m_MethodMap) {
+                v.GetMethodTypeEnsureDef();
+            }
             
 
         }

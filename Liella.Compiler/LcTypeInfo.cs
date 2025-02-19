@@ -25,6 +25,7 @@ using System.Threading.Tasks;
  */
 
 namespace Liella.Backend.Compiler {
+
     public enum LcTypeInitStage {
         DeclareComplete = 0x1, 
         InstancePending = 0x2,
@@ -58,6 +59,17 @@ namespace Liella.Backend.Compiler {
             }
             return m_InstanceType!;
         }
+        protected bool CheckTypeInitialized(LcTypeInitStage pending, LcTypeInitStage complete) {
+            if(InitState.HasFlag(complete)) return true;
+            if(InitState.HasFlag(pending)) {
+                throw new InvalidOperationException("Bad type structure cause infinity recursive");
+            }
+            InitState ^= pending;
+            return false;
+        }
+        protected void SetTypeInitialized(LcTypeInitStage pending, LcTypeInitStage complete) {
+            InitState ^= pending ^ complete;
+        }
         public ICGenNamedStructType GetDataStorageTypeEnsureDef() {
             if(!IsStorageRequired) throw new NotSupportedException();
             if(!CheckTypeInitialized(LcTypeInitStage.DataStoragePending, LcTypeInitStage.DataStorageComplete)) {
@@ -86,17 +98,7 @@ namespace Liella.Backend.Compiler {
         protected abstract ICGenNamedStructType SetupDataStorage();
         protected abstract ICGenNamedStructType SetupStaticStorage();
         protected abstract CodeGenValue SetupVirtualTable();
-        protected bool CheckTypeInitialized(LcTypeInitStage pending, LcTypeInitStage complete) {
-            if(InitState.HasFlag(complete)) return true;
-            if(InitState.HasFlag(pending)) {
-                throw new InvalidOperationException("Bad type structure cause infinity recursive");
-            }
-            InitState ^= pending;
-            return false;
-        }
-        protected void SetTypeInitialized(LcTypeInitStage pending, LcTypeInitStage complete) {
-            InitState ^= pending ^ complete;
-        }
+        
         protected LcTypeInfo(ITypeEntry entry, LcCompileContext context) {
             Entry = entry;
             Context = context;

@@ -134,12 +134,14 @@ namespace Liella.TypeAnalysis.Metadata.Entry
 
                         // All generics used in interface declared methods are present in interface declared generics
                         var targetSignature = SubsituteSignauture(genericLookupTable, j.GetDetails().Signature);
-                        var localMethod = FindInterfaceImplMethodInList(Methods, j.Name, targetSignature, genericContext);
+
+                        var lookupContext = new GenericTypeContext(genericContext.TypeArguments, j.MethodArguments);
+                        var localMethod = FindInterfaceImplMethodInList(Methods, j.Name, targetSignature, lookupContext);
 
                         if(localMethod is null) {
                             var baseType = BaseType;
                             while((baseType is not null) && (localMethod is null)) {
-                                localMethod = FindInterfaceImplMethodInList(baseType.TypeMethods, j.Name, targetSignature, genericContext);
+                                localMethod = FindInterfaceImplMethodInList(baseType.TypeMethods, j.Name, targetSignature, lookupContext);
                                 baseType = baseType.BaseType;
                             }
                         }

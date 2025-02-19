@@ -30,27 +30,11 @@ namespace Liella.Backend.Compiler {
             m_GenericSubstitutionMap = instEntry.FormalArguments.Zip(instEntry.ActualArguments).ToFrozenDictionary(e => e.First, e => e.Second);
         }
         // [TODO] Support type substitute
-        public override LcTypeInfo? ResolveContextType(ITypeEntry entry) {
-            var realTypeEntry = SubstituteGenericEntry(entry);
+        public override LcTypeInfo ResolveContextType(ITypeEntry entry) {
+            var realTypeEntry = GenericSubstitutionHelpers.SubstituteGenericEntry(Context.TypeEnv.EntryManager, m_GenericSubstitutionMap,entry);
             return base.ResolveContextType(realTypeEntry);
         }
 
-        protected ITypeEntry SubstituteGenericEntry(ITypeEntry entry, bool likelyPrimaryInst = true) {
-            if(entry is TypeDefEntry) return entry;
-            if(entry is GenericPlaceholderTypeEntry placeholder) {
-                return m_GenericSubstitutionMap[entry];
-            }
-            if(entry is PointerTypeEntry pointer) {
-                return PointerTypeEntry.Create(Context.TypeEnv.EntryManager, SubstituteGenericEntry(pointer.InvariantPart.ElementType, likelyPrimaryInst));
-            }
-            if(entry is ReferenceTypeEntry reference) {
-                return PointerTypeEntry.Create(Context.TypeEnv.EntryManager, SubstituteGenericEntry(reference.InvariantPart.ElementType, likelyPrimaryInst));
-            }
-            if(entry is TypeInstantiationEntry typeInst) {
-                var typeArguments = typeInst.InvariantPart.TypeArguments.Select(e=> SubstituteGenericEntry(e,false)).ToImmutableArray();
-                return TypeInstantiationEntry.Create(Context.TypeEnv.EntryManager, typeInst.InvariantPart.DefinitionType, typeArguments, likelyPrimaryInst);
-            }
-            return entry;
-        }
+        
     }
 }
