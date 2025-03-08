@@ -182,10 +182,9 @@ namespace Liella.Backend.Compiler {
                 basePrimaryTable.Values.CopyTo(((Span<CodeGenValue>)primaryVTableSlots).Slice(0, basePrimaryTable.Values.Length));
             }
 
-            var vtableLayout = GetVTableLayoutEnsureDef();
             foreach(var i in m_Methods) {
                 if(i.IsVirtualDef || i.IsVirtualOverride) {
-                    var index = vtableLayout.FindIndex(e => e.methodDef == i.Entry.VirtualMethodPrototype);
+                    var index = LookupVtableSlotIndex(i.Entry);
                     primaryVTableSlots[index] = i.GetMethodValueEnsureDef();
                 }
             }
@@ -231,10 +230,37 @@ namespace Liella.Backend.Compiler {
             return vtableGlobalPtr;
         }
 
+        protected virtual int LookupVtableSlotIndex(IMethodEntry entry) {
+            var vtableLayout = GetVTableLayoutEnsureDef();
+            var virtualPrototype = entry.VirtualMethodPrototype;
+
+            var layoutSize = vtableLayout.Count;
+            for(var i = 0; i < layoutSize; i++) {
+                var (methodDef, offset) = vtableLayout[i];
+
+                var vtableMethodDef = methodDef is MethodInstantiation inst ? inst.Definition : methodDef;
+
+                if(vtableMethodDef != virtualPrototype) continue;
+
+                if((entry is not MethodInstantiation) && (methodDef is not MethodInstantiation))
+                    return i;
+
+                if((entry is MethodInstantiation entryInst) && (methodDef is MethodInstantiation vInst)) {
+                    if(entryInst.ActualArguments.SequenceEqual(vInst.ActualArguments)) {
+                        return i;
+                    }
+                }
+            }
+
+            throw new KeyNotFoundException();
+        }
+
         protected override List<(IEntityEntry, int)> SetupVTableLayout() {
             var vtableLayout = new List<(IEntityEntry, int)>();
             var vtStartIdx = 0;
             var pointerSize = CgContext.TypeManager.Configuration.PointerSize;
+
+            if(Entry.Name.Contains("CBase")) Debugger.Break();
 
             if(Entry.BaseType is not null) {
                 var baseTypeInfo = ResolveContextType(Entry.BaseType);

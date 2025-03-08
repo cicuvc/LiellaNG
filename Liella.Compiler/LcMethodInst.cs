@@ -15,24 +15,14 @@ namespace Liella.Compiler {
 
     public class LcMethodInst :LcMethodInfo{
         protected FrozenDictionary<ITypeEntry, ITypeEntry> m_GenericSubstituteMap;
-        public MethodInstantiation MethodInstantiationEntry { get; }
+        public MethodDefEntry MethodDefinitionEntry { get; }
         
-        public LcMethodInst(LcTypeInfo declType,MethodInstantiation methodInst, LcCompileContext context, CodeGenContext cgContext) : base(declType,methodInst.InvariantPart.Definition,context,cgContext) {
-            MethodInstantiationEntry = methodInst;
+        public LcMethodInst(LcTypeInfo declType,MethodInstantiation methodInst, LcCompileContext context, CodeGenContext cgContext) : base(declType,methodInst,context,cgContext) {
+            MethodDefinitionEntry = methodInst.InvariantPart.Definition;
 
             m_GenericSubstituteMap = methodInst.FormalArguments.Zip(methodInst.ActualArguments).ToFrozenDictionary(e => e.First, e => e.Second);
         }
 
-
-        protected override void InitializeFunction() {
-            var argumentsType = MethodInstantiationEntry.Signature.ParameterTypes.Select(e => ResolveContextType(e).GetInstanceTypeEnsureDef()).ToImmutableArray();
-            var returnType = ResolveContextType(MethodInstantiationEntry.Signature.ReturnType).GetInstanceTypeEnsureDef();
-
-
-            var hasImpl = !MethodInstantiationEntry.Attributes.HasFlag(MethodAttributes.Abstract);
-            m_MethodType = CgContext.TypeFactory.CreateFunction(argumentsType.AsSpan(), returnType);
-            m_MethodFunction = CgContext.CreateFunction(MethodInstantiationEntry.FullName, m_MethodType, hasImpl);
-        }
         protected override LcTypeInfo ResolveContextType(ITypeEntry entry) {
             var subType = GenericSubstitutionHelpers.SubstituteGenericEntry(Context.TypeEnv.EntryManager, m_GenericSubstituteMap, entry);
             return base.ResolveContextType(subType);

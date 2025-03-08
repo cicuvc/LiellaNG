@@ -147,7 +147,9 @@ namespace Liella.TypeAnalysis.Metadata
                         var methodSpec = metaReader.GetMethodSpecification((MethodSpecificationHandle)handle);
 
                         var methodGenerics = methodSpec.DecodeSignature(TypeEnv.SignDecoder, genericContext);
-                        var baseMethod = ResolveMethodToken(asmInfo, methodSpec.Method, new(genericContext.TypeArguments, methodGenerics!), out exactDeclType);
+
+                        // resolve definition method for specification. Here context is still the bounding method, not methodGenerics
+                        var baseMethod = ResolveMethodToken(asmInfo, methodSpec.Method, genericContext, out exactDeclType);
 
                         if (baseMethod is MethodInstantiation methodInst)
                         {

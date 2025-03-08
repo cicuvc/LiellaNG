@@ -30,37 +30,28 @@ namespace Payload
     //public class ClassB<T> : ClassA<T>, IA<T> {
 
     //}
-    //public class CBase<TClass> {
-    //    public virtual void GVN<T>(T x) { }
-    //}
-    //public class CDerive<TClass> : CBase<TClass> {
-    //    public override void GVN<T>(T x) {
-            
-    //    }
-    //}
-
-    public class CBase {
-        public virtual void Func() {
+    public class CBase<TClass> {
+        public virtual void GVN<T>(T x) { }
+    }
+    public class CDerive<TClass> : CBase<TClass> {
+        public override void GVN<T>(T x) {
 
         }
     }
-    public class CDerived: CBase {
-        public override void Func() {
-            
-        }
-    }
+
+
 
     public unsafe class App {
         //public static void CallMethod(IA<int> x) {
         //    x.Func0(12);
         //}
-        public static void CallMethod(CBase v) {
-            v.Func();
+        public static void CallMethod<T>(CBase<T> v) {
+            v.GVN(12);
         }
 
         //public static void InitString(ReadOnlySpan<char> s) { }
         public static void Main() {
-            CallMethod(new CDerived());
+            CallMethod(new CDerive<short>());
 
             //(new CDerive<short>()).GVN<int>(12);
             //CallMethod(new ClassB<int>());
