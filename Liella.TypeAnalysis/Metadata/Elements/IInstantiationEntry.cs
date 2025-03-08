@@ -10,7 +10,7 @@
         //int MethodArgumentCount { get; }
         bool IsPrimary { get; }
         bool IsTypeInst { get; }
-        IInstantiationEntry AsPrimary(EntityEntryManager manager);
+        IInstantiationEntry AsPrimary(EntityEntryManager manager, bool isPrimary = true);
         public int ArgumentCount => FormalArguments.Count();
         //public IEnumerable<ITypeEntry> IntrinsicFormalArgument => IsTypeInst ? FormalArguments : FormalArguments.TakeLast(MethodArgumentCount);
         //public IEnumerable<ITypeEntry> IntrinsicActualArgument => IsTypeInst ? ActualArguments : ActualArguments.TakeLast(MethodArgumentCount);

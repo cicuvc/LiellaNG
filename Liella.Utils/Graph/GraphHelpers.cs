@@ -119,6 +119,7 @@ namespace Liella.TypeAnalysis.Utils.Graph
                 if (perNodeData[nodeIndex[i]].dfn == 0) TarjanImpl(i);
             }
 
+            var deduplicationSet = new HashSet<(SCCNode<TNode>, SCCNode<TNode>)>();
             foreach (var i in results)
             {
                 foreach (var j in i.Value.InternalNodes)
@@ -128,7 +129,12 @@ namespace Liella.TypeAnalysis.Utils.Graph
                     {
                         var kScc = results[k.Target];
                         if (kScc == jScc) continue;
-                        finalGraph.AddEdge(jScc, kScc, new(j, k.Target, k.ExtraData));
+
+                        if(!deduplicationSet.Contains((jScc, kScc))) {
+                            deduplicationSet.Add((jScc, kScc));
+                            finalGraph.AddEdge(jScc, kScc, new(j, k.Target, k.ExtraData));
+                        }
+                        
                     }
                 }
             }

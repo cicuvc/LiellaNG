@@ -48,6 +48,7 @@ namespace Liella.Backend.Compiler {
             CgContext = cgContext;
         }
         public override LcTypeInfo ResolveContextType(ITypeEntry entry) {
+            if(!Context.NativeTypeMap.ContainsKey(entry)) Debugger.Break();
             return Context.NativeTypeMap.GetValueOrDefault(entry,null!);
         }
         public override LcMethodInfo ResolveContextMethod(IMethodEntry entry) {
@@ -260,7 +261,6 @@ namespace Liella.Backend.Compiler {
             var vtStartIdx = 0;
             var pointerSize = CgContext.TypeManager.Configuration.PointerSize;
 
-            if(Entry.Name.Contains("CBase")) Debugger.Break();
 
             if(Entry.BaseType is not null) {
                 var baseTypeInfo = ResolveContextType(Entry.BaseType);

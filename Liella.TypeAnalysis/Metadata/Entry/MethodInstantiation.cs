@@ -64,6 +64,6 @@ namespace Liella.TypeAnalysis.Metadata.Entry
             collector.NotifyEntity(InvariantPart.Definition);
         }
 
-        public IInstantiationEntry AsPrimary(EntityEntryManager _) => this;
+        public IInstantiationEntry AsPrimary(EntityEntryManager _, bool isPrimary = true) => this;
     }
 }

@@ -185,6 +185,7 @@ namespace Liella.TypeAnalysis.Metadata
                     var declTypeNode = (SCCNode<IEntityEntry>?)null;
 
                     var instantiationNode = (IInstantiationEntry)i.InternalNodes.First();
+                    if(instantiationNode.Name.Contains("CDerive")) Debugger.Break();
                     var primaryNode = instantiationNode.IsPrimary;
 
                     localInstantiationCache.Clear();
@@ -292,7 +293,8 @@ namespace Liella.TypeAnalysis.Metadata
                         if (instantiationNode is TypeInstantiationEntry typeInst)
                         {
                             var typeDef = (TypeDefEntry)instantiationNode.Definition!;
-                            var type = TypeInstantiationEntry.Create(TypeEnv.EntryManager, typeDef, v.args.ToImmutableArray(), true);
+                            var type = TypeInstantiationEntry.Create(TypeEnv.EntryManager, typeDef, 
+                                v.args.ToImmutableArray(), true);
                             ActivatedEntity.Add(type);
 
                             Console.WriteLine($"Activate type {type}");

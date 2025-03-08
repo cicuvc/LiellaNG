@@ -65,9 +65,9 @@ namespace Liella.TypeAnalysis.Metadata.Entry
             collector.NotifyEntity(InvariantPart.DefinitionType);
         }
 
-        public IInstantiationEntry AsPrimary(EntityEntryManager manager)
+        public IInstantiationEntry AsPrimary(EntityEntryManager manager, bool isPrimary = true)
         {
-            return Create(manager, InvariantPart.DefinitionType, TypeArguments, true);
+            return Create(manager, InvariantPart.DefinitionType, TypeArguments, isPrimary);
         }
     }
 }

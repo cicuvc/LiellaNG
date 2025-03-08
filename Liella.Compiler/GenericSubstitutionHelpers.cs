@@ -11,20 +11,20 @@ using System.Threading.Tasks;
 namespace Liella.Compiler {
     public static class GenericSubstitutionHelpers {
         
-        public static ITypeEntry SubstituteGenericEntry(EntityEntryManager manager,IReadOnlyDictionary<ITypeEntry, ITypeEntry> genericMap, ITypeEntry entry, bool likelyPrimaryInst = true) {
+        public static ITypeEntry SubstituteGenericEntry(EntityEntryManager manager,IReadOnlyDictionary<ITypeEntry, ITypeEntry> genericMap, ITypeEntry entry) {
             if(entry is TypeDefEntry) return entry;
             if(entry is IGenericPlaceholder placeholder) {
                 return genericMap.GetValueOrDefault(entry, entry);
             }
             if(entry is PointerTypeEntry pointer) {
-                return PointerTypeEntry.Create(manager, SubstituteGenericEntry(manager, genericMap, pointer.InvariantPart.ElementType, likelyPrimaryInst));
+                return PointerTypeEntry.Create(manager, SubstituteGenericEntry(manager, genericMap, pointer.InvariantPart.ElementType));
             }
             if(entry is ReferenceTypeEntry reference) {
-                return PointerTypeEntry.Create(manager, SubstituteGenericEntry(manager, genericMap, reference.InvariantPart.ElementType, likelyPrimaryInst));
+                return PointerTypeEntry.Create(manager, SubstituteGenericEntry(manager, genericMap, reference.InvariantPart.ElementType));
             }
             if(entry is TypeInstantiationEntry typeInst) {
-                var typeArguments = typeInst.InvariantPart.TypeArguments.Select(e => SubstituteGenericEntry(manager, genericMap, e, false)).ToImmutableArray();
-                return TypeInstantiationEntry.Create(manager, typeInst.InvariantPart.DefinitionType, typeArguments, likelyPrimaryInst);
+                var typeArguments = typeInst.InvariantPart.TypeArguments.Select(e => SubstituteGenericEntry(manager, genericMap, e)).ToImmutableArray();
+                return TypeInstantiationEntry.Create(manager, typeInst.InvariantPart.DefinitionType, typeArguments, true);
             }
             return entry;
         }

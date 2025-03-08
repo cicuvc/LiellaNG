@@ -51,7 +51,7 @@ namespace Payload
 
         //public static void InitString(ReadOnlySpan<char> s) { }
         public static void Main() {
-            CallMethod(new CDerive<short>());
+            CallMethod(new CDerive<GenericClass<GenericClass<int>>>());
 
             //(new CDerive<short>()).GVN<int>(12);
             //CallMethod(new ClassB<int>());

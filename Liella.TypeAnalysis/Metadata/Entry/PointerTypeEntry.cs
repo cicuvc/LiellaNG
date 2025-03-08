@@ -123,7 +123,7 @@ namespace Liella.TypeAnalysis.Metadata.Entry {
             return CreateEntry(manager, new(baseType));
         }
 
-        public IInstantiationEntry AsPrimary(EntityEntryManager manager) {
+        public IInstantiationEntry AsPrimary(EntityEntryManager manager, bool isPrimary = true) {
             return this;
         }
     }
