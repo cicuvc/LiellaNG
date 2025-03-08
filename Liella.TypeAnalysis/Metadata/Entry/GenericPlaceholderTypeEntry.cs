@@ -1,13 +1,16 @@
 ﻿using Liella.TypeAnalysis.Metadata.Elements;
 using System.Collections.Immutable;
+using System.Collections.ObjectModel;
 using System.Reflection;
 using System.Reflection.Metadata;
 
 
 namespace Liella.TypeAnalysis.Metadata.Entry
 {
-    public sealed class GenericPlaceholderTypeEntry : EntityEntryBase<GenericPlaceholderTypeEntry, GenericPlaceholderTag, GenericPlaceholderDetails>, IEntityEntry<GenericPlaceholderTypeEntry>, ITypeEntry
-    {
+    public interface IGenericPlaceholder {
+
+    }
+    public sealed class GenericPlaceholderTypeEntry : EntityEntryBase<GenericPlaceholderTypeEntry, GenericPlaceholderTag, GenericPlaceholderDetails>, IEntityEntry<GenericPlaceholderTypeEntry>, ITypeEntry, IGenericPlaceholder {
         public override string Name => $"{InvariantPart.Parent.Name}#{GetDetails().Name}";
         public override string FullName => $"{InvariantPart.Parent.FullName}#{GetDetails().Name}";
         public override bool IsGenericInstantiation => false;
@@ -30,7 +33,9 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes
             => ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)>.Empty;
 
-        public IEnumerable<ITypeEntry> ImplInterfaces => Enumerable.Empty<ITypeEntry>();
+        public IReadOnlyDictionary<ITypeEntry, ImmutableArray<(IMethodEntry methodDecl, IMethodEntry methodImpl)>> ImplInterfaces
+            => ReadOnlyDictionary<ITypeEntry, ImmutableArray<(IMethodEntry methodDecl, IMethodEntry methodImpl)>>.Empty;
+
 
         private GenericPlaceholderTypeEntry(TypeEnvironment typeEnv, in GenericPlaceholderTag tag) : base(typeEnv)
         {

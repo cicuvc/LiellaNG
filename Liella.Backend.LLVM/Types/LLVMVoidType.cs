@@ -25,5 +25,12 @@ namespace Liella.Backend.LLVM.Types
         {
             return CreateEntry(manager, new());
         }
+
+        public override void PrettyPrint(CGenFormattedPrinter printer, int expandLevel) {
+            printer.Append("void");
+        }
+        public override string ToString() {
+            return "void";
+        }
     }
 }

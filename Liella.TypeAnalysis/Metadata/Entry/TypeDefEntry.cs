@@ -29,7 +29,8 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes 
             => GetDetails().CustomAttributes;
 
-        public IEnumerable<ITypeEntry> ImplInterfaces => GetDetails().ImplInterfaces;
+        public IReadOnlyDictionary<ITypeEntry, ImmutableArray<(IMethodEntry methodDecl, IMethodEntry methodImpl)>> ImplInterfaces
+            => GetDetails().InterfaceImpl;
 
         private TypeDefEntry(TypeEnvironment typeEnv, in TypeDefEntryTag tag) : base(typeEnv)
         {

@@ -27,6 +27,6 @@ namespace Liella.Backend.Components {
         public IReadOnlyDictionary<string, ICGenStructType> NamedStructs => m_NamedStructs;
         public IReadOnlyDictionary<string, CodeGenValue> GlobalValues => m_GlobalValues;
         public abstract CodeGenFunction CreateFunction(string name, ICGenFunctionType type, bool hasImpl);
-        public abstract CodeGenValue CreateGlobalValue(string name, CodeGenValue value);
+        public abstract CodeGenGlobalPtrValue CreateGlobalValue(string name, ICGenType type, CodeGenValue? value);
     }
 }

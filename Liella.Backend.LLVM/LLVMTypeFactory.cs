@@ -14,6 +14,7 @@ namespace Liella.Backend.LLVM {
 
         public override ICGenType Void { get; }
         public override ICGenType Int1 { get; }
+        public override ICGenType Int32 { get; }
         public override ICGenType VoidPtr { get; }
 
         public LLVMTypeFactory(CodeGenContext context)
@@ -25,6 +26,7 @@ namespace Liella.Backend.LLVM {
             Float64 = LLVMNumericType.CreateFloat64(Manager);
             Void = LLVMVoidType.Create(Manager);
             Int1 = LLVMNumericType.CreateInt(1, Manager);
+            Int32 = LLVMNumericType.CreateInt(32, Manager);
             VoidPtr = LLVMPointerType.Create(Void, 0, Manager);
         }
 
@@ -52,12 +54,9 @@ namespace Liella.Backend.LLVM {
         {
             if (name is not null)
             {
-                var llvmContext = ((CodeGenLLVMContext)Context).ContextRef;
-                var type = llvmContext.CreateNamedStruct(name);
-                var typesImm = types.ToImmutableArray();
-                type.StructSetBody(typesImm.Select(e => ((ILLVMType)e).InternalType).ToArray(), false);
-
-                return LLVMStructType.Create(type, typesImm, Manager);
+                var structRef = CreateStruct(name);
+                structRef.SetStructBody(types);
+                return structRef;
             }
             return LLVMStructType.Create(types.ToImmutableArray(), Manager);
         }

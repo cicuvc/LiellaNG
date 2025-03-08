@@ -15,11 +15,14 @@ namespace Liella.Backend.Compiler {
             m_ILOpCodes = code;
         }
     }
-    public abstract class ILCodeProcessor {
+    public interface ICodeProcessor {
+        string Name { get; }
+    }
+    public class ILCodeProcessor {
         protected delegate void EmitHandler(ILOpCode opcode, ulong operand);
         private Dictionary<ILOpCode, EmitHandler> m_DispatchMap = new Dictionary<ILOpCode, EmitHandler>();
-        public ILCodeProcessor() {
-            var type = GetType();
+        public void RegisterCodeProcessor(ICodeProcessor processor) {
+            var type = processor.GetType();
             var methods = type.GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
             foreach(var i in methods) {
                 var attribute = i.GetCustomAttribute<ILCodeHandlerAttribute>();
@@ -30,7 +33,6 @@ namespace Liella.Backend.Compiler {
                     }
                 }
             }
-
         }
         public void Emit(ILOpCode code, ulong operand) {
             if(m_DispatchMap.ContainsKey(code)) {

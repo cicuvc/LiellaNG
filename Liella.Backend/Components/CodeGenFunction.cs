@@ -7,19 +7,17 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Liella.Backend.Components {
-    public abstract class CodeGenFunction {
+    public abstract class CodeGenFunction:CodeGenValue {
         public CodeGenModule Module { get; }
         public CodeGenContext Context { get; }
         public string Name { get; }
-        public ICGenFunctionType FunctionType { get; }
         public abstract IReadOnlyCollection<CodeGenBasicBlock> BasicBlocks { get; }
         public abstract CodeGenBasicBlock? EntryBlock { get; }
         public abstract ReadOnlySpan<CodeGenValue> Parameters { get; }
-        public CodeGenFunction(string name, ICGenFunctionType type, CodeGenModule module) {
+        public CodeGenFunction(string name, ICGenFunctionType type, CodeGenModule module):base(type) {
             Name = name;
             Module = module;
             Context = module.Context;
-            FunctionType = type;
         }
         public abstract CodeGenBasicBlock AddBasicBlock(string name);
         public abstract void RemoveBasicBlock(CodeGenBasicBlock del);

@@ -6,7 +6,7 @@ using System.Collections.Immutable;
 
 namespace Liella.Backend.LLVM.IR
 {
-    public class CodeGenLLVMFunction : CodeGenFunction
+    public class CodeGenLLVMFunction : CodeGenFunction, ILLVMValue
     {
         protected ImmutableArray<CodeGenValue> m_Parameters;
         protected List<CodeGenBasicBlock> m_BasicBlocks = new();
@@ -16,6 +16,8 @@ namespace Liella.Backend.LLVM.IR
         public override IReadOnlyCollection<CodeGenBasicBlock> BasicBlocks => m_BasicBlocks;
 
         public override CodeGenBasicBlock? EntryBlock { get; }
+
+        public LLVMValueRef ValueRef => LLVMFunction;
 
         public CodeGenLLVMFunction(string name, ICGenFunctionType type, LLVMValueRef function, CodeGenLLVMModule module, bool hasImpl) : base(name, type, module)
         {
@@ -42,5 +44,6 @@ namespace Liella.Backend.LLVM.IR
         {
             throw new NotImplementedException();
         }
+        public override string ToString() => Name;
     }
 }

@@ -3,6 +3,7 @@ using Liella.Compiler;
 using Liella.TypeAnalysis.Metadata;
 using Liella.Utils;
 using LLVMSharp.Interop;
+using System.Runtime.CompilerServices;
 
 namespace Liella.Driver {
     internal class App {

@@ -65,7 +65,7 @@ namespace Liella.TypeAnalysis.Metadata
 
         public ITypeEntry GetSZArrayType(ITypeEntry elementType)
         {
-            throw new NotImplementedException();
+            return ArrayTypeEntry.Create(TypeEnv.EntryManager, elementType);
         }
 
         public ITypeEntry GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)

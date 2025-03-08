@@ -25,7 +25,7 @@ namespace Liella.TypeAnalysis.Utils
             return new(enumerable.ToFrozenDictionary(keySelector, valueSelector));
         }
     }
-    public struct KeyFrozenDictionary<TKey, TValue> : IReadOnlyDictionary<TKey, TValue> where TKey : notnull
+    public class KeyFrozenDictionary<TKey, TValue> : IReadOnlyDictionary<TKey, TValue> where TKey : notnull
     {
         private readonly FrozenDictionary<TKey, TValue> m_InternalDictionary;
         public KeyFrozenDictionary(FrozenDictionary<TKey, TValue> internalDictionary)

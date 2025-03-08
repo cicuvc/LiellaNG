@@ -33,5 +33,10 @@ namespace Liella.Backend.LLVM.Types
             }
             return $"{InvariantPart.ELementType}*";
         }
+
+        public override void PrettyPrint(CGenFormattedPrinter printer, int expandLevel) {
+            InvariantPart.ELementType.PrettyPrint(printer, expandLevel - 1);
+            printer.Append("*");
+        }
     }
 }

@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace Liella.TypeAnalysis.Utils
 {
-    public class ILDecoder : IEnumerable<(ILOpCode opcode, ulong operand)>
+    public class ILDecoder : IEnumerable<(int offset, ILOpCode opcode, ulong operand)>
     {
         public static FrozenDictionary<ILOpCode, OpCode> OpCodeMap { get; }
         public static FrozenDictionary<ILOpCode, int> OpCodeSizeMap { get; }
@@ -72,24 +72,56 @@ namespace Liella.TypeAnalysis.Utils
         }
 
         protected ImmutableArray<byte> m_ILCodes = ImmutableArray<byte>.Empty;
-        protected ImmutableArray<(ILOpCode opcode, ulong operand)> m_Insts;
-        public ImmutableArray<(ILOpCode opcode, ulong operand)> Instructions => m_Insts;
+        protected ImmutableArray<(int offset, ILOpCode opcode, ulong operand)> m_Insts;
+        public ImmutableArray<(int offset, ILOpCode opcode, ulong operand)> Instructions => m_Insts;
         public ILDecoder(ImmutableArray<byte> ilCode)
         {
             m_ILCodes = ilCode;
 
             var codeSpan = ilCode.AsSpan();
-            var instBuilder = ImmutableArray.CreateBuilder<(ILOpCode opcode, ulong operand)>();
+            var instBuilder = new List<(int offset, ILOpCode opcode, ulong operand)>();
 
             for (var i = 0; i < ilCode.Length;)
             {
                 var (opcode, operand, size) = DecodeSingleOpCode(codeSpan.Slice(i));
-                instBuilder.Add((opcode, operand));
+                instBuilder.Add((i, opcode, operand));
 
                 i += size;
             }
 
-            m_Insts = instBuilder.ToImmutable();
+            var totalInstCount = instBuilder.Count;
+            for(var i = 0; i < totalInstCount; i++) {
+                var (offset, opcode, operand) = instBuilder[i];
+
+                var codeInfo = OpCodeMap[opcode];
+
+                if((codeInfo.FlowControl == FlowControl.Branch) || (codeInfo.FlowControl == FlowControl.Cond_Branch)) {
+                    var nextInstStartOffset = (i == totalInstCount - 1) ? ilCode.Length : instBuilder[i + 1].offset;
+                    var targetOffset = nextInstStartOffset + (int)operand;
+
+                    var targetIndex = -1;
+                    var l = 0;
+                    var r = totalInstCount;
+                    while(l + 1 <= r) {
+                        var mid = (l + r) >> 1;
+                        var midOffset = instBuilder[mid].offset;
+                        if(midOffset > targetOffset) {
+                            r = mid;
+                        } else if(midOffset < targetOffset) {
+                            l = mid + 1;
+                        } else {
+                            targetIndex = mid;
+                            break;
+                        }
+                    }
+                    if(targetIndex < 0)
+                        throw new KeyNotFoundException($"IL instruction at offset {offset} not found");
+
+                    instBuilder[i] = (offset, opcode, (ulong)targetIndex);
+                }
+            }
+
+            m_Insts = instBuilder.ToImmutableArray();
         }
         protected static (ILOpCode code, ulong operand, int length) DecodeSingleOpCode(ReadOnlySpan<byte> code)
         {
@@ -137,8 +169,8 @@ namespace Liella.TypeAnalysis.Utils
 
         }
 
-        public IEnumerator<(ILOpCode opcode, ulong operand)> GetEnumerator()
-            => ((IEnumerable<(ILOpCode opcode, ulong operand)>)m_Insts).GetEnumerator();
+        public IEnumerator<(int offset, ILOpCode opcode, ulong operand)> GetEnumerator()
+            => ((IEnumerable<(int offset, ILOpCode opcode, ulong operand)>)m_Insts).GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }

@@ -10,5 +10,7 @@ namespace Liella.TypeAnalysis.Metadata.Elements
         public ITypeEntry DeclType { get; }
         public ILDecoder Decoder { get; }
         public MethodSignature<ITypeEntry> Signature { get; }
+        public IMethodEntry? VirtualMethodPrototype { get; }
+        public MethodImplAttributes ImplAttributes { get; }
     }
 }

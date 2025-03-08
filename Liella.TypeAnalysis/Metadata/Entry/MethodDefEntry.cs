@@ -18,11 +18,13 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public ImmutableArray<ITypeEntry> TypeArguments => GetDetails().DeclType.TypeArguments;
         public ImmutableArray<ITypeEntry> MethodArguments => GetDetails().MethodGenericParams;
         public IEnumerable<ITypeDeriveSource> DerivedType => GetDetails().DerivedEntry;
-        public MethodAttributes Attriutes => GetDetails().MethodDef.Attributes;
+        public MethodAttributes Attributes => GetDetails().MethodDef.Attributes;
+        public MethodImplAttributes ImplAttributes => GetDetails().MethodDef.ImplAttributes;
         public ILDecoder Decoder => GetDetails().ILCode;
         public MethodSignature<ITypeEntry> Signature => GetDetails().Signature;
-        public MethodAttributes Attributes => GetDetails().Attributes;
         public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes => GetDetails().CustomAttributes;
+
+        public IMethodEntry? VirtualMethodPrototype => GetDetails().VirtualMethodPrototype;
 
         private MethodDefEntry(TypeEnvironment typeEnv, in MethodDefTag tag) : base(typeEnv)
         {

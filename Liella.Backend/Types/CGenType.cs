@@ -5,11 +5,10 @@ using System.Collections.Immutable;
 using System.Formats.Tar;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading.Tasks;
 
-namespace Liella.Backend.Types
-{
+namespace Liella.Backend.Types {
+
     public enum CGenTypeTag {
         Void = 0x8,
         Integer = 0x1,
@@ -56,11 +55,15 @@ namespace Liella.Backend.Types
             m_HashKey.m_InvariantPart = invariantPart;
             return manager.GetEntryOrAdd(m_HashKey);
         }
+
+        public abstract void PrettyPrint(CGenFormattedPrinter printer, int expandLevel);
     }
     public interface ICGenType:IEquatable<ICGenType> {
         CGenTypeTag Tag { get; }
         int Size { get; }
         int Alignment { get; }
+
+        void PrettyPrint(CGenFormattedPrinter printer, int expandLevel);
     }
     public interface ICGenNumericType: ICGenType {
         public abstract int Width { get; }
@@ -90,6 +93,7 @@ namespace Liella.Backend.Types
         public abstract ICGenNumericType Float64 { get; }
         public abstract ICGenType Void { get; }
         public abstract ICGenType Int1 { get; }
+        public abstract ICGenType Int32 { get; }
         public abstract ICGenType VoidPtr { get; }
 
         public abstract ICGenNamedStructType CreateStruct(string name);

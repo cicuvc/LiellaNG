@@ -38,6 +38,11 @@ namespace Liella.Backend.Compiler {
                 PrimitiveTypeCode.Void => CgContext.TypeFactory.Void,
                 PrimitiveTypeCode.Double => CgContext.TypeFactory.Float64,
                 PrimitiveTypeCode.Single => CgContext.TypeFactory.Float32,
+                PrimitiveTypeCode.String => CgContext.TypeFactory.CreatePointer(GetDataStorageTypeEnsureDef()!),
+                PrimitiveTypeCode.Object => CgContext.TypeFactory.CreatePointer(GetDataStorageTypeEnsureDef()!),
+                PrimitiveTypeCode.Char => CgContext.TypeFactory.CreateIntType(16, false),
+                PrimitiveTypeCode.IntPtr => CgContext.TypeFactory.CreateIntType(8 * CgContext.TypeManager.Configuration.PointerSize, false),
+                PrimitiveTypeCode.UIntPtr => CgContext.TypeFactory.CreateIntType(8 * CgContext.TypeManager.Configuration.PointerSize, true),
                 _ => throw new NotSupportedException()
             };
         }

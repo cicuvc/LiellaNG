@@ -6,8 +6,7 @@ using System.Reflection.Metadata;
 
 namespace Liella.TypeAnalysis.Metadata.Entry
 {
-    public sealed class TypeInstantiationEntry : EntityEntryBase<TypeInstantiationEntry, TypeInstantiationEntryTag, EmptyDetails<TypeInstantiationEntry>>, ITypeEntry, IEntityEntry<TypeInstantiationEntry>, IInstantiationEntry
-    {
+    public sealed class TypeInstantiationEntry : EntityEntryBase<TypeInstantiationEntry, TypeInstantiationEntryTag, EmptyDetails<TypeInstantiationEntry>>, ITypeEntry, IEntityEntry<TypeInstantiationEntry>, ITypeInstEntry {
         public string GenericTypeArguments => InvariantPart.TypeArguments.Select(e => e.Name).DefaultIfEmpty("").Aggregate((u, v) => u + "," + v);
         public override string Name => $"{InvariantPart.DefinitionType.Name}[{GenericTypeArguments}]";
         public override string FullName => $"{InvariantPart.DefinitionType.FullName}[{GenericTypeArguments}]";
@@ -34,7 +33,7 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public IEnumerable<MethodDefEntry> TypeMethods => InvariantPart.DefinitionType.TypeMethods;
 
         public IEnumerable<FieldDefEntry> TypeFields => InvariantPart.DefinitionType.TypeFields;
-        public IEnumerable<ITypeEntry> ImplInterfaces => InvariantPart.DefinitionType.ImplInterfaces;
+        public IReadOnlyDictionary<ITypeEntry, ImmutableArray<(IMethodEntry methodDecl, IMethodEntry methodImpl)>> ImplInterfaces => InvariantPart.DefinitionType.ImplInterfaces;
         public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes
             => InvariantPart.DefinitionType.CustomAttributes;
         public TypeInstantiationEntry(TypeEnvironment typeEnv, in TypeInstantiationEntryTag tag) : base(typeEnv)

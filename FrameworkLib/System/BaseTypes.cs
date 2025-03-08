@@ -5,6 +5,51 @@ using System.Runtime.InteropServices;
 
 namespace System
 {
+    public readonly ref struct ReadOnlySpan<T> {
+        internal readonly ref T _reference;
+        private readonly int _length;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe ReadOnlySpan(void* pointer, int length) {
+            _reference = ref Unsafe.As<byte, T>(ref *(byte*)pointer);
+            _length = length;
+        }
+
+        /// <summary>Creates a new <see cref="ReadOnlySpan{T}"/> of length 1 around the specified reference.</summary>
+        /// <param name="reference">A reference to data.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public ReadOnlySpan(ref readonly T reference) {
+            _reference = ref Unsafe.AsRef(in reference);
+            _length = 1;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal ReadOnlySpan(ref T reference, int length) {
+            _reference = ref reference;
+            _length = length;
+        }
+
+    }
+    public readonly ref struct Span<T> {
+        internal readonly ref T _reference;
+        private readonly int _length;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public unsafe Span(void* pointer, int length) {
+            _reference = ref Unsafe.As<byte, T>(ref *(byte*)pointer);
+            _length = length;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Span(ref readonly T reference) {
+            _reference = ref Unsafe.AsRef(in reference);
+            _length = 1;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal Span(ref T reference, int length) {
+            _reference = ref reference;
+            _length = length;
+        }
+
+    }
     public class GenericTest<T> {
         public K F2<K>() => default!;
     }
@@ -128,7 +173,7 @@ namespace System
     [StructLayout(LayoutKind.Sequential)]
     public unsafe sealed class String
     {
-        public readonly byte* buffer;
+        public readonly char* buffer;
         public readonly int Length;
         
         public static string Format(string format, object o1)
@@ -142,14 +187,12 @@ namespace System
         public unsafe static implicit operator void*(String value) {
             return value.buffer;
         }
-
-    }
-    public abstract class Array
-    {
-        public class Nested
-        {
-
+        public unsafe static implicit operator ReadOnlySpan<char>(String value) {
+            return new ReadOnlySpan<char>(ref *value.buffer, value.Length);
         }
+    }
+    public class Array
+    {
     }
     public class Array<T> : Array { }
     public unsafe abstract class Delegate {

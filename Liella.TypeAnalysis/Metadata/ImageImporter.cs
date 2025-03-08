@@ -2,11 +2,15 @@
 {
     public class ImageImporter
     {
-        public TypeEnvironment TypeEnv { get; } = new();
+        public TypeEnvironment TypeEnv { get; }
         protected Func<AssemblyToken, Stream> m_ResolveCallback;
         public ImageImporter(Stream mainAssembly, Func<AssemblyToken, Stream> resolveCallback)
         {
             m_ResolveCallback = resolveCallback;
+
+            TypeEnv = new([
+                "System.Array"
+                ]);
 
             var readerTuple = TypeEnv.AddMainAssembly(mainAssembly);
             ResolveDependency(readerTuple);

@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Metadata;
+using System.Runtime.CompilerServices;
 
 
 namespace Liella.TypeAnalysis.Metadata.Entry
@@ -68,6 +69,7 @@ namespace Liella.TypeAnalysis.Metadata.Entry
             }).Distinct().ToImmutableArray();
 
 
+            
             DerivedEntry = [.. TypeArguments,.. ImplInterfaces,.. Fields.Select(e => e.GetDetails().FieldType)];
 
             if (!TypeDef.BaseType.IsNil)
@@ -96,6 +98,9 @@ namespace Liella.TypeAnalysis.Metadata.Entry
             }
 
             VirtualMethods = Methods.Where(e => e.GetDetails().MethodDef.Attributes.HasFlag(MethodAttributes.Virtual)).ToImmutableArray();
+
+            //foreach(var i in VirtualMethods.Where(e => e.Attributes.HasFlag(MethodAttributes.NewSlot)))
+            //    DerivedEntry.Add(i);
 
             CustomAttributes = TypeDef.GetCustomAttributes().Select(e => {
                 var customAttribute = entry.AsmInfo.MetaReader.GetCustomAttribute(e);
@@ -153,6 +158,10 @@ namespace Liella.TypeAnalysis.Metadata.Entry
                         }
                     }
                 }
+
+                InterfaceImpl = interfaceImpls.Select(e=>new KeyValuePair<ITypeEntry, ImmutableArray<(IMethodEntry methodDecl, IMethodEntry methodImpl)>>(e.Key, e.Value.ToImmutableArray())).ToFrozenDictionary();
+            } else {
+                InterfaceImpl = FrozenDictionary<ITypeEntry, ImmutableArray<(IMethodEntry methodDecl, IMethodEntry methodImpl)>>.Empty;
             }
 
         }

@@ -19,11 +19,11 @@ namespace Liella.Backend.LLVM.Types
         }
         public override int GetHashCode()
         {
-            return InternalType.Handle.GetHashCode();
+            return InternalType.Handle.GetHashCode() ^ ReturnType.GetHashCode() ^ ParamTypes.GetHashCode();
         }
         public bool Equals(LLVMFunctionTag other)
         {
-            return InternalType == other.InternalType;
+            return InternalType == other.InternalType && ReturnType == other.ReturnType && ParamTypes.SequenceEqual(other.ParamTypes);
         }
     }
 }

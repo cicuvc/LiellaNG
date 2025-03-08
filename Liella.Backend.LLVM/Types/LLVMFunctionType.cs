@@ -31,7 +31,19 @@ namespace Liella.Backend.LLVM.Types
             return CreateEntry(manager, new(fnType, paramTypes, returnType, isVarArgs));
         }
         public override string ToString() {
-            return InvariantPart.InternalType.PrintToString();
+            var printer = new CGenFormattedPrinter();
+            PrettyPrint(printer, 1);
+            return printer.Dump();
+        }
+
+        public override void PrettyPrint(CGenFormattedPrinter printer, int expandLevel) {
+            InvariantPart.ReturnType.PrettyPrint(printer, expandLevel - 1);
+            printer.Append("(");
+            foreach(var i in InvariantPart.ParamTypes) {
+                i.PrettyPrint(printer, expandLevel - 1);
+                printer.Append(", ");
+            }
+            printer.Append(")");
         }
     }
 }

@@ -34,12 +34,16 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public ILDecoder Decoder => InvariantPart.Definition.Decoder;
         public MethodSignature<ITypeEntry> Signature => InvariantPart.Definition.Signature;
         public MethodAttributes Attributes => InvariantPart.Definition.Attributes;
+        public MethodImplAttributes ImplAttributes => InvariantPart.Definition.ImplAttributes;
         public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes
             => InvariantPart.Definition.CustomAttributes;
         //public int TypeArgumentCount => TypeArguments.Length;
         //public int MethodArgumentCount => MethodArguments.Length;
         public bool IsPrimary => true;
         public bool IsTypeInst => false;
+
+        public IMethodEntry? VirtualMethodPrototype => InvariantPart.Definition.VirtualMethodPrototype;
+
         public MethodInstantiation(TypeEnvironment typeEnv, in MethodInstantiationTag tag) : base(typeEnv)
         {
             m_InvariantPart = tag;

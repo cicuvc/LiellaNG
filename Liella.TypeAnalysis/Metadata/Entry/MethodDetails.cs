@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Reflection.Metadata;
+using System.Xml.Serialization;
 
 
 namespace Liella.TypeAnalysis.Metadata.Entry
@@ -23,7 +24,6 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public MethodDefEntry? VirtualMethodPrototype { get; private set; }
         public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes { get; private set; }
         public bool IsValid => Entry is not null;
-        public MethodAttributes Attributes { get; private set; }
 
         public void CreateDetails(MethodDefEntry entry)
         {
@@ -39,7 +39,6 @@ namespace Liella.TypeAnalysis.Metadata.Entry
             MethodDef = metaReader.GetMethodDefinition(entry.InvariantPart.MethodDef);
 
             DeclType = TypeDefEntry.Create(typeEnv.EntryManager, entry.AsmInfo, MethodDef.GetDeclaringType());
-            Attributes = MethodDef.Attributes;
 
             Name = metaReader.GetString(MethodDef.Name);
 
@@ -99,12 +98,14 @@ namespace Liella.TypeAnalysis.Metadata.Entry
                 VirtualMethodPrototype = methodPrototype;
                 typeEnv.Collector.RegisterVirtualChain(entry, methodPrototype!);
                 //DerivedEntry.Add(MethodInstantiation.Create(typeEnv.EntryManager, parentClass, methodPrototype!, MethodGenericParams));
+            }else if(MethodDef.Attributes.HasFlag(MethodAttributes.NewSlot)) {
+                VirtualMethodPrototype = Entry;
             }
 
 
             if (ILCode is not null)
             {
-                foreach (var (opcode, operand) in ILCode)
+                foreach (var (offset, opcode, operand) in ILCode)
                 {
                     var opcodeInfo = ILDecoder.OpCodeMap[opcode];
                     switch (opcodeInfo.OperandType)

@@ -16,11 +16,11 @@ namespace Liella.Backend.LLVM.Types
         }
         public override int GetHashCode()
         {
-            return InternalType.Handle.GetHashCode();
+            return InternalType.Handle.GetHashCode() ^ ELementType.GetHashCode() ^ Length;
         }
         public bool Equals(LLVMArrayTag other)
         {
-            return other.InternalType == InternalType;
+            return other.InternalType == InternalType && other.ELementType == ELementType && other.Length == Length;
         }
     }
 }

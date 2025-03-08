@@ -14,7 +14,7 @@ namespace Liella.Backend.LLVM
         public CodeGenLLVMModule Module { get; }
         public override CGenTypeFactory TypeFactory { get; }
         protected ThreadLocal<CodeGenLLVMBuilder> m_Builders;
-        public override IConstGenerator ConstGenerator => throw new NotImplementedException();
+        public override IConstGenerator ConstGenerator { get; }
 
         public override CodeGenFunction CreateFunction(string name, ICGenFunctionType type, bool hasImpl)
         {
@@ -23,12 +23,17 @@ namespace Liella.Backend.LLVM
             return new CodeGenLLVMFunction(name, type, function, Module, hasImpl);
         }
 
-        public override CodeGenValue CreateGlobalValue(string name, CodeGenValue value)
+        public override CodeGenGlobalPtrValue CreateGlobalValue(string name, ICGenType elementType, CodeGenValue? value)
         {
-            var valuePtr = ModuleRef.AddGlobal(((ILLVMType)value.Type).InternalType, name);
-            valuePtr.Initializer = ((ILLVMValue)value).ValueRef;
-
-            return new CodeGenLLVMGloPtr(valuePtr, value.Type);
+            var valuePtr = ModuleRef.AddGlobal(((ILLVMType)elementType).InternalType, name);
+            if(value is not null) {
+                if(value.Type != elementType) {
+                    throw new ArgumentException("Type mismatch");
+                }
+                valuePtr.Initializer = ((ILLVMValue)value).ValueRef;
+            }
+            var ptrType = TypeFactory.CreatePointer(elementType);
+            return new CodeGenLLVMGloPtr(valuePtr, ptrType, elementType, value);
         }
         public CodeGenLLVMContext(CodeGenLLVMModule llvmModule)
         {
@@ -36,6 +41,7 @@ namespace Liella.Backend.LLVM
             ModuleRef = llvmModule.ModuleRef;
             ContextRef = llvmModule.ModuleRef.Context;
             TypeFactory = new LLVMTypeFactory(this);
+            ConstGenerator = new CodeGenLLVMConstGenerator(this);
 
             m_Builders = new ThreadLocal<CodeGenLLVMBuilder>();
         }

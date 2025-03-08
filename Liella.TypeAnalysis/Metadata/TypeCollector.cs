@@ -1,6 +1,7 @@
 ﻿using Liella.TypeAnalysis.Metadata.Elements;
 using Liella.TypeAnalysis.Metadata.Entry;
 using Liella.TypeAnalysis.Utils.Graph;
+using System;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Reflection;
@@ -51,9 +52,10 @@ namespace Liella.TypeAnalysis.Metadata
                 impls.Add(implMethod);
             }
         }
-        public void NotifyEntity(IEntityEntry entry, TypeInstantiationEntry? optionTypeInst = null)
+        public void NotifyEntity(IEntityEntry entry)
         {
             if (ActivatedEntity.Contains(entry)) return;
+
 
             if (entry.IsGenericInstantiation)
             {
@@ -152,7 +154,7 @@ namespace Liella.TypeAnalysis.Metadata
             // Do propagation
             foreach (var i in sortedDAG)
             {
-                if (i.InternalNodes.First() is GenericPlaceholderTypeEntry)
+                if (i.InternalNodes.First() is IGenericPlaceholder)
                 {
 
                     var candidates = new List<(IEntityEntry type, InstantStackNode instStack, IInstantiationEntry actualInst)>();
@@ -163,7 +165,7 @@ namespace Liella.TypeAnalysis.Metadata
                         var actualInst = j.ExtraData.ExtraData.inst!;
                         var isPrimary = j.ExtraData.ExtraData.isPrimary;
 
-                        if (targetType is GenericPlaceholderTypeEntry placeholder)
+                        if (targetType is IGenericPlaceholder placeholder)
                         {
                             candidates.AddRange(
                                 sccNodeCandidateTypeCache[targetNode].Select(e =>
@@ -289,7 +291,7 @@ namespace Liella.TypeAnalysis.Metadata
                     {
                         if (instantiationNode is TypeInstantiationEntry typeInst)
                         {
-                            var typeDef = (TypeDefEntry)instantiationNode.Definition;
+                            var typeDef = (TypeDefEntry)instantiationNode.Definition!;
                             var type = TypeInstantiationEntry.Create(TypeEnv.EntryManager, typeDef, v.args.ToImmutableArray(), true);
                             ActivatedEntity.Add(type);
 
@@ -306,6 +308,20 @@ namespace Liella.TypeAnalysis.Metadata
 
                             Console.WriteLine($"Activate method {func}");
                             instantiations.Add((func, k));
+                        }else if(instantiationNode is PointerTypeEntry pointerInst) {
+                            var ptr = PointerTypeEntry.Create(TypeEnv.EntryManager, v.args[0]);
+
+                            ActivatedEntity.Add(ptr);
+                            Console.WriteLine($"Activate pointer {ptr}");
+                            instantiations.Add((ptr, k));
+                        }else if(instantiationNode is ReferenceTypeEntry refInst) {
+                            var refPtr = ReferenceTypeEntry.Create(TypeEnv.EntryManager, v.args[0]);
+
+                            ActivatedEntity.Add(refPtr);
+                            Console.WriteLine($"Activate reference {refPtr}");
+                            instantiations.Add((refPtr, k));
+                        } else {
+                            throw new NotImplementedException();
                         }
                     }
 
@@ -325,18 +341,20 @@ namespace Liella.TypeAnalysis.Metadata
         }
         public void BuildGenericTypeDAG()
         {
-            var genericParams = ActivatedEntity.Where(e => e is GenericPlaceholderTypeEntry).ToArray();
+            var genericParams = ActivatedEntity.Where(e => e is IGenericPlaceholder).ToArray();
 
             var genericDAG = new FwdGraph<IEntityEntry, (IInstantiationEntry? inst, bool isPrimary)>();
 
             // map from type definition to type instantiations
-            var gvnTypeInsts = m_GenericInstEntity.OfType<TypeInstantiationEntry>()
-                .GroupBy(e => e.Definition).ToDictionary(e => e.Key);
+            var gvnTypeInsts = m_GenericInstEntity.OfType<ITypeInstEntry>()
+                .Where(e=>e.Definition is not null)
+                .GroupBy(e => e.Definition!).ToDictionary(e => e.Key);
 
             // map from (implClass, prototypeMethod) -> implMethod
-            var prototypeToOverrideDefMap = m_GenericInstEntity.OfType<TypeInstantiationEntry>().SelectMany(e =>
+            var prototypeToOverrideDefMap = m_GenericInstEntity.OfType<ITypeInstEntry>().SelectMany(e =>
             {
-                return ((TypeDefEntry)e.Definition).Methods.Where(e => e.Attriutes.HasFlag(MethodAttributes.Virtual) && !e.Attriutes.HasFlag(MethodAttributes.NewSlot));
+                if(e.Definition is null) return [];
+                return ((TypeDefEntry)e.Definition).Methods.Where(e => e.Attributes.HasFlag(MethodAttributes.Virtual) && !e.Attributes.HasFlag(MethodAttributes.NewSlot));
             }).ToDictionary(e =>
             {
                 return (e.DeclType, e.GetDetails().VirtualMethodPrototype);
@@ -346,8 +364,8 @@ namespace Liella.TypeAnalysis.Metadata
             var gvnExpandSet = m_GenericInstEntity.Where(e =>
             {
                 if (e is not MethodInstantiation methodInst) return false;
-                return ((MethodDefEntry)methodInst.Definition).Attriutes.HasFlag(MethodAttributes.Virtual & MethodAttributes.NewSlot);
-            }).Where(e => m_VirtualMethodChain.ContainsKey((MethodDefEntry)e.Definition)).ToArray();
+                return ((MethodDefEntry)methodInst.Definition).Attributes.HasFlag(MethodAttributes.Virtual & MethodAttributes.NewSlot);
+            }).Where(e => m_VirtualMethodChain.ContainsKey((MethodDefEntry)e.Definition!)).ToArray();
 
             foreach (MethodInstantiation i in gvnExpandSet)
             {
@@ -370,9 +388,9 @@ namespace Liella.TypeAnalysis.Metadata
                         {
                             //var declRealClass = LookupInheritChain(k, declTypeDef);
 
-                            var overrideMethodDef = prototypeToOverrideDefMap[((ITypeEntry)k.Definition, methodDef)];
+                            var overrideMethodDef = prototypeToOverrideDefMap[((ITypeEntry)k.Definition!, methodDef)];
 
-                            var overrideMethodInst = MethodInstantiation.Create(TypeEnv.EntryManager, k, overrideMethodDef, i.MethodArguments);
+                            var overrideMethodInst = MethodInstantiation.Create(TypeEnv.EntryManager, (TypeInstantiationEntry)k, overrideMethodDef, i.MethodArguments);
 
                             m_GenericInstEntity.Add(overrideMethodInst);
                         }
@@ -396,7 +414,7 @@ namespace Liella.TypeAnalysis.Metadata
 
             foreach (var i in sccGraph)
             {
-                if (i.InternalNodes.OfType<GenericPlaceholderTypeEntry>().Count() != 0 &&
+                if (i.InternalNodes.OfType<IGenericPlaceholder>().Count() != 0 &&
                     i.InternalNodes.OfType<IInstantiationEntry>().Count() != 0)
                 {
                     throw new Exception("Infinity generic loop detected");

@@ -7,9 +7,9 @@ namespace Liella.Backend.LLVM.IR.Values
     {
         LLVMValueRef ValueRef { get; }
 
-        public static CodeGenLLVMValue GetLLVMValue(CodeGenValue value, CodeGenContext context)
+        public static ILLVMValue GetLLVMValue(CodeGenValue value, CodeGenContext context)
         {
-            if (value is ILLVMValue llvmValue) return (CodeGenLLVMValue)llvmValue;
+            if (value is ILLVMValue llvmValue) return llvmValue;
             if (value is CodeGenLiternalValue literal)
             {
                 var factory = context.TypeFactory;

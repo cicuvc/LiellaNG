@@ -1,10 +1,12 @@
 ﻿using Liella.Backend.Compiler;
 using Liella.Backend.Components;
+using Liella.Backend.Types;
 using Liella.TypeAnalysis.Metadata;
 using Liella.TypeAnalysis.Metadata.Elements;
 using Liella.TypeAnalysis.Metadata.Entry;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
@@ -34,8 +36,14 @@ namespace Liella.Compiler
         public CodeGenFactory Backend { get; }
         public CodeGenContext Context { get; }
         public IReadOnlyDictionary<ITypeEntry, LcTypeInfo> NativeTypeMap => m_NativeTypeMap;
+        public IReadOnlyDictionary<IMethodEntry, LcMethodInfo> NativeMethodMap => m_MethodMap;
+        public IReadOnlyList<LcTypeInfo> InterfaceRegistry => m_InterfaceRegistry;
+        
         protected Dictionary<ITypeEntry, LcTypeInfo> m_NativeTypeMap = new(new TypeEntryComparer());
         protected Dictionary<IMethodEntry, LcMethodInfo> m_MethodMap = new();
+        protected List<LcTypeInfo> m_InterfaceRegistry = new();
+
+        public ICGenStructType InterfaceLutType { get; }
         public LcCompileContext(TypeEnvironment typeEnv, string projName, string target, string backend = "llvm") {
             TypeEnv = typeEnv;
 
@@ -47,6 +55,14 @@ namespace Liella.Compiler
 
             Module = Backend.CreateModule(projName, target);
             Context = Module.Context;
+
+
+            var typeFactory = Context.TypeFactory;
+            InterfaceLutType = typeFactory.CreateStruct([typeFactory.Int32, typeFactory.Int32], "interface_lut");
+        }
+        public int RegisterInterface(LcTypeInfo typeInfo) {
+            m_InterfaceRegistry.Add(typeInfo);
+            return m_InterfaceRegistry.Count;
         }
 
         public void StartCompilation() {
@@ -71,13 +87,19 @@ namespace Liella.Compiler
                 if(type.IsStorageRequired) {
                     type.GetDataStorageTypeEnsureDef();
                     type.GetStaticStorageTypeEnsureDef();
+                    type.GetReferenceTypeEnsureDef();
                 }
-                Console.WriteLine($"{type.Entry}: {type.GetInstanceTypeEnsureDef()}");
+                type.GetInstanceTypeEnsureDef();
                 
             }
 
             foreach(var i in TypeEnv.Collector.ActivatedEntity) {
                 if(i is IMethodEntry methodEntry) {
+                    var genericContext = (IEntityGenericContextEntry)methodEntry;
+                    if(genericContext.MethodArguments.Length > 0 && (methodEntry is not MethodInstantiation)) {
+                        continue; // skip generic method definitions
+                    }
+
                     var exactDeclType = methodEntry.DeclType;
 
                     if(exactDeclType.TypeArguments.Length > 0) {
@@ -103,8 +125,18 @@ namespace Liella.Compiler
             foreach(var (k,v) in m_MethodMap) {
                 v.GetMethodTypeEnsureDef();
             }
-            
 
+            foreach(var (entry, type) in m_NativeTypeMap) {
+                if(type.IsStorageRequired) {
+                    Console.WriteLine(type.GetVirtualTableType());
+                }
+            }
+
+            foreach(var (entry, type) in m_NativeTypeMap) {
+                if(type.IsStorageRequired) {
+                    type.GetVTablePtr();
+                }
+            }
         }
     }
 }

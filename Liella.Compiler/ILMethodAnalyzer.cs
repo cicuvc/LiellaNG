@@ -16,7 +16,7 @@ namespace Liella.Backend.Compiler {
         public int Length => EndIndex - StartIndex;
         public ILMethodBasicBlock? TrueExit { get; set; }
         public ILMethodBasicBlock? FalseExit { get; set; }
-        public (ILOpCode opcode, ulong operand) this[int index] {
+        public (int offset, ILOpCode opcode, ulong operand) this[int index] {
             get {
                 if(EndIndex - StartIndex <= index) {
                     throw new ArgumentOutOfRangeException("Out of Basic block");
@@ -45,7 +45,8 @@ namespace Liella.Backend.Compiler {
             candidateStart.Add((0, true));
 
             for(var i = 0; i < decoder.Instructions.Length; i++) {
-                var (ilCode, operand) = decoder.Instructions[i];
+                var (currInstOffset, ilCode, operand) = decoder.Instructions[i];
+                
                 var codeInfo = opCodeMap[ilCode];
 
                 // Mark end of basic block
@@ -53,13 +54,13 @@ namespace Liella.Backend.Compiler {
                 var isCondBranch = codeInfo.FlowControl == FlowControl.Cond_Branch;
                 var isTerminal = codeInfo.FlowControl == FlowControl.Return || codeInfo.FlowControl == FlowControl.Throw;
 
-                if(isBranch || isCondBranch) {
-                    var target = (i+1) + (int)operand;
+                if(isBranch) {
+                    var target = (int)operand;
                     candidateStart.Add((target, true));
                     candidateEnd.Add(i, (codeInfo.FlowControl, target, -1));
                 }
                 if(isCondBranch) {
-                    var trueTarget = (i + 1) + (int)operand;
+                    var trueTarget = (int)operand;
                     var falseTarget = (i + 1);
                     candidateStart.Add((trueTarget, true));
                     candidateStart.Add((falseTarget, true));

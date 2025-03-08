@@ -100,5 +100,7 @@ namespace System.Runtime.CompilerServices
     public static class RuntimeFeature
     {
         public const string UnmanagedSignatureCallingConvention = nameof(UnmanagedSignatureCallingConvention);
+        public const string ByRefFields = nameof(ByRefFields);
+        public const string DefaultImplementationsOfInterfaces = nameof(DefaultImplementationsOfInterfaces);
     }
 }

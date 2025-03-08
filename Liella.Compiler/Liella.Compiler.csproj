@@ -10,7 +10,6 @@
 
   <ItemGroup>
     <Folder Include="Elements\" />
-    <Folder Include="ILProcessors\" />
   </ItemGroup>
 
   <ItemGroup>

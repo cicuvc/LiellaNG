@@ -37,11 +37,11 @@ namespace Liella.Backend.LLVM.Types
         }
         public override int GetHashCode()
         {
-            return InternalType.Handle.GetHashCode() ^ (Name?.GetHashCode() ?? 0x114514);
+            return InternalType.Handle.GetHashCode() ^ (Name?.GetHashCode() ?? 0x114514) ^ (StructTypes.GetHashCode());
         }
         public bool Equals(LLVMStructTag other)
         {
-            return other.InternalType == InternalType && other.Name == Name;
+            return other.InternalType == InternalType && other.Name == Name && StructTypes.SequenceEqual(other.StructTypes);
         }
     }
 }

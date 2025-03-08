@@ -1,10 +1,11 @@
 ﻿namespace Liella.TypeAnalysis.Metadata.Elements
 {
+    public interface ITypeInstEntry: IInstantiationEntry { }
     public interface IInstantiationEntry : IEntityEntry
     {
         IEnumerable<ITypeEntry> FormalArguments { get; }
         IEnumerable<ITypeEntry> ActualArguments { get; }
-        IEntityEntry Definition { get; }
+        IEntityEntry? Definition { get; }
         //int TypeArgumentCount { get; }
         //int MethodArgumentCount { get; }
         bool IsPrimary { get; }

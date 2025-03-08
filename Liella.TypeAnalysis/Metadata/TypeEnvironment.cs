@@ -1,6 +1,12 @@
 ﻿using Liella.TypeAnalysis.Metadata.Elements;
 using Liella.TypeAnalysis.Metadata.Entry;
 using Liella.TypeAnalysis.Namespaces;
+using Liella.TypeAnalysis.Utils;
+using System;
+using System.Collections;
+using System.Collections.Frozen;
+using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection.Metadata;
 
 
@@ -8,6 +14,7 @@ namespace Liella.TypeAnalysis.Metadata
 {
     public class TypeEnvironment
     {
+        public ImmutableArray<string> BuiltinTypes { get; }
         protected Dictionary<AssemblyToken, AssemblyReaderTuple> m_Assemblies = new();
         public Dictionary<AssemblyToken, NamespaceQueryTree> NamespaceTree { get; } = new();
         public NamespaceQueryTree? SystemLibraryTree { get; protected set; }
@@ -15,8 +22,9 @@ namespace Liella.TypeAnalysis.Metadata
         public TypeCollector Collector { get; }
         public MetadataTokenResolver TokenResolver { get; }
         public SignatureDecoder SignDecoder { get; }
-        public TypeEnvironment()
+        public TypeEnvironment(ImmutableArray<string> builtinTypes)
         {
+            BuiltinTypes = builtinTypes;
             SignDecoder = new(this);
             EntryManager = new(this);
             TokenResolver = new(this);
@@ -74,13 +82,30 @@ namespace Liella.TypeAnalysis.Metadata
                 return !e.Value.AssemblyInfo.IsPruneEnabled;
             })
             .SelectMany(e => e.Value.AllTypes)
-            .Select(e => TypeDefEntry.Create(EntryManager, e.AsmInfo, e.TypeDef));
+            .Select(e => TypeDefEntry.Create(EntryManager, e.AsmInfo, e.TypeDef))
+            .Concat(Enum.GetValues<PrimitiveTypeCode>().Select(ResolvePrimitiveType))
+            .Concat(BuiltinTypes.Select(ResolveSystemTypeFromFullName));
 
             var initialMethods = initialEntities.SelectMany(e => e.GetDetails().Methods);
 
             Collector.CollectEntities(initialEntities.OfType<IEntityEntry>().Concat(initialMethods));
 
             Collector.BuildGenericTypeDAG();
+        }
+
+        public TypeDefEntry ResolvePrimitiveType(PrimitiveTypeCode code) {
+            var typeNode = TokenResolver.ResolvePrimitiveType(code);
+            return TypeDefEntry.Create(EntryManager, typeNode.AsmInfo, typeNode.TypeDef);
+        }
+
+        public TypeDefEntry ResolveSystemTypeFromFullName(string name) {
+            NamespaceNodeBase currentNode = SystemLibraryTree!.RootNamespace;
+            var sections = name.Split('.');
+            foreach(var i in sections[..^1]) {
+                currentNode = currentNode[i];
+            }
+            var typeNode = (TypeNode)currentNode[sections[^1], false];
+            return TypeDefEntry.Create(EntryManager, typeNode.AsmInfo, typeNode.TypeDef);
         }
     }
 }

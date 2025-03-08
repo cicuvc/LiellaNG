@@ -1,9 +1,13 @@
 ﻿using Liella.Backend.Types;
 using LLVMSharp.Interop;
 using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Text;
+using System.Xml.Linq;
 
 namespace Liella.Backend.LLVM.Types
 {
+    [DebuggerVisualizer("Microsoft.VisualStudio.DebuggerVisualizers.TextVisualizer, Microsoft.VisualStudio.DebuggerVisualizers")]
     public class LLVMNamedStructType:CGenAbstractType<LLVMNamedStructType, LLVMNamedStructTag>, ICGenType<LLVMNamedStructType>, ICGenNamedStructType, ILLVMType {
         protected (ICGenType type, int offset)[] m_Fields = Array.Empty<(ICGenType types, int offset)>();
         protected int m_Size;
@@ -33,7 +37,23 @@ namespace Liella.Backend.LLVM.Types
             InvariantPart.InternalType.StructSetBody(m_Fields.Select(e => ((ILLVMType)e.type).InternalType).ToArray(), false);
         }
         public override string ToString() {
-            return InvariantPart.InternalType.PrintToString();
+            var printer = new CGenFormattedPrinter();
+            PrettyPrint(printer, 1);
+            return printer.Dump();
+        }
+
+        public override void PrettyPrint(CGenFormattedPrinter printer, int expandLevel) {
+            if(expandLevel <= 0) printer.Append(Name);
+            else {
+                printer.Append($"struct {Name} = {{");
+                using(printer.BeginIndent()) {
+                    foreach(var i in m_Fields) {
+                        i.type.PrettyPrint(printer, expandLevel - 1);
+                        printer.AppendLine(",");
+                    }
+                }
+                printer.Append("}");
+            }
         }
     }
     public class LLVMStructType : CGenAbstractType<LLVMStructType, LLVMStructTag>, ICGenType<LLVMStructType>, ICGenStructType, ILLVMType
@@ -66,5 +86,21 @@ namespace Liella.Backend.LLVM.Types
         {
             return CreateEntry(manager, new LLVMStructTag(types, elemenetTypes));
         }
+        public override void PrettyPrint(CGenFormattedPrinter printer, int expandLevel) {
+            printer.AppendLine("struct {");
+            using(printer.BeginIndent()) {
+                foreach(var i in InvariantPart.StructTypes) {
+                    i.type.PrettyPrint(printer, expandLevel - 1);
+                    printer.AppendLine(",");
+                }
+            }
+            printer.Append("}");
+        }
+        public override string ToString() {
+            var printer = new CGenFormattedPrinter();
+            PrettyPrint(printer, 4);
+            return printer.Dump();
+        }
+
     }
 }

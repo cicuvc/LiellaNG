@@ -1,12 +1,20 @@
 ﻿using Liella.Backend.Components;
 using Liella.Backend.LLVM.IR.Values;
+using Liella.Backend.LLVM.Types;
 using Liella.Backend.Types;
 using LLVMSharp.Interop;
+using System.Collections.Immutable;
 
 namespace Liella.Backend.LLVM.IR
 {
     public class CodeGenLLVMConstGenerator : IConstGenerator
     {
+        public CodeGenLLVMConstGenerator(CodeGenLLVMContext context) {
+            CgContext = context;
+        }
+
+        public CodeGenLLVMContext CgContext { get; }
+
         public CodeGenValue CreateAdd(CodeGenValue lhs, CodeGenValue rhs, NoWarpHint hint = NoWarpHint.Default)
         {
             var value = LLVMValueRef.CreateConstAdd(((ILLVMValue)lhs).ValueRef, ((ILLVMValue)rhs).ValueRef);
@@ -30,9 +38,20 @@ namespace Liella.Backend.LLVM.IR
             return new CodeGenLLVMBinaryValue(BinaryOperations.AShr, lhs, rhs, value);
         }
 
+        public CodeGenConstArrayValue CreateConstArray(ICGenArrayType type, ReadOnlySpan<CodeGenValue> values) {
+            var valuesImm = values.ToImmutableArray();
+            var value = LLVMValueRef.CreateConstArray(((ILLVMType)type).InternalType, valuesImm.Select(e => ((ILLVMValue)e).ValueRef).ToArray());
+            return new CodeGenLLVMConstArrayValue(type, value, valuesImm);
+        }
+
         public CodeGenValue CreateConstString(string value, bool nullEnd = true)
         {
             throw new NotImplementedException();
+        }
+
+        public CodeGenConstStructValue CreateConstStruct(ICGenStructType type, ReadOnlySpan<CodeGenValue> values) {
+            var constStruct = LLVMValueRef.CreateConstStruct(values.ToImmutableArray().Select(e => ILLVMValue.GetLLVMValue(e, CgContext).ValueRef).ToArray(), false);
+            return new CodeGenLLVMConstStructValue(constStruct, type, values.ToImmutableArray());
         }
 
         public CodeGenValue CreateDirectCast(CodeGenValue lhs, ICGenType type)

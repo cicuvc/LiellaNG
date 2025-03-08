@@ -78,5 +78,7 @@ namespace Liella.Backend.Components {
     }
     public interface IConstGenerator: IValueOperations {
         CodeGenValue CreateConstString(string value, bool nullEnd = true);
+        CodeGenConstStructValue CreateConstStruct(ICGenStructType type, ReadOnlySpan<CodeGenValue> types);
+        CodeGenConstArrayValue CreateConstArray(ICGenArrayType type, ReadOnlySpan<CodeGenValue> values);
     }
 }

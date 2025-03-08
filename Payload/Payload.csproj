@@ -14,6 +14,7 @@
     <RuntimeMetadataVersion>v4.0.30319</RuntimeMetadataVersion>
     <AnalysisLevel>None</AnalysisLevel>
     <OutDir>../bin/Payload/</OutDir>
+    
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Platform)'=='AnyCPU'">

@@ -55,5 +55,9 @@ namespace Liella.Backend.LLVM.Types
         public override string ToString() {
             return InvariantPart.InternalType.PrintToString();
         }
+
+        public override void PrettyPrint(CGenFormattedPrinter printer, int expandLevel) {
+            printer.Append(InvariantPart.InternalType.PrintToString());
+        }
     }
 }

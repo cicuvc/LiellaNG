@@ -16,8 +16,14 @@ namespace Liella.TypeAnalysis.Metadata.Elements
         bool IsValueType { get; }
         IEnumerable<MethodDefEntry> TypeMethods { get; }
         IEnumerable<FieldDefEntry> TypeFields { get; }
-        IEnumerable<ITypeEntry> ImplInterfaces { get; }
+        IReadOnlyDictionary<ITypeEntry, ImmutableArray<(IMethodEntry methodDecl, IMethodEntry methodImpl)>> ImplInterfaces { get; }
         MethodDefEntry? GetMethod(string name, in MethodSignature<ITypeEntry> signature, GenericTypeContext genericContext, bool throwOnNotFound = false);
         FieldDefEntry GetField(string name);
+
+
+
+
+        bool IsInterface => Attributes.HasFlag(TypeAttributes.Interface);
+        bool IsExplicitLayout => Attributes.HasFlag(TypeAttributes.ExplicitLayout);
     }
 }

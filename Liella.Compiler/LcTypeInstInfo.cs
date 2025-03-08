@@ -23,7 +23,8 @@ namespace Liella.Backend.Compiler {
     public class LcTypeInstInfo : LcTypeDefInfo {
         protected FrozenDictionary<ITypeEntry, ITypeEntry> m_GenericSubstitutionMap;
         public TypeInstantiationEntry TypeInstantiation { get; }
-        
+        public override ITypeEntry ExactEntry => TypeInstantiation;
+
         public LcTypeInstInfo(TypeInstantiationEntry instEntry,TypeDefEntry defEntry, LcCompileContext typeContext, CodeGenContext cgContext) : base(defEntry, typeContext, cgContext) {
             TypeInstantiation = instEntry;
 

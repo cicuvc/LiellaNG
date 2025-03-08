@@ -19,11 +19,9 @@ namespace Liella.Backend.LLVM.IR
         }
         public CodeGenValue CreateAdd(CodeGenValue lhs, CodeGenValue rhs, NoWarpHint hint = NoWarpHint.Default)
         {
-            lhs = ILLVMValue.GetLLVMValue(lhs, BasicBlock.ParentFunction.Context);
-            rhs = ILLVMValue.GetLLVMValue(rhs, BasicBlock.ParentFunction.Context);
+            var lValue = ILLVMValue.GetLLVMValue(lhs, BasicBlock.ParentFunction.Context).ValueRef;
+            var rValue = ILLVMValue.GetLLVMValue(rhs, BasicBlock.ParentFunction.Context).ValueRef;
 
-            var lValue = ((ILLVMValue)lhs).ValueRef;
-            var rValue = ((ILLVMValue)rhs).ValueRef;
             var value = hint switch
             {
                 NoWarpHint.Default => Builder.BuildAdd(lValue, rValue),

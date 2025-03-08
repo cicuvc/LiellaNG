@@ -13,7 +13,7 @@ namespace Liella.Compiler {
         
         public static ITypeEntry SubstituteGenericEntry(EntityEntryManager manager,IReadOnlyDictionary<ITypeEntry, ITypeEntry> genericMap, ITypeEntry entry, bool likelyPrimaryInst = true) {
             if(entry is TypeDefEntry) return entry;
-            if(entry is GenericPlaceholderTypeEntry placeholder) {
+            if(entry is IGenericPlaceholder placeholder) {
                 return genericMap.GetValueOrDefault(entry, entry);
             }
             if(entry is PointerTypeEntry pointer) {

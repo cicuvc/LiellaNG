@@ -26,6 +26,12 @@ namespace Liella.Backend.Components {
                 return literal.Tag == Tag && literal.Size == Size && literal.Alignment == Alignment;
             return false;
         }
+        public override string ToString() {
+            return Tag.ToString();
+        }
+        public void PrettyPrint(CGenFormattedPrinter printer, int expandLevel) {
+            printer.Append(Tag.ToString());
+        }
     }
     public class CodeGenLiternalValue<T> : CodeGenLiternalValue where T : unmanaged {
         public T Value { get; }
@@ -38,6 +44,28 @@ namespace Liella.Backend.Components {
         public CodeGenLiternalValue(ICGenType type, string valueType) : base(type) {
             ValueType = valueType;
         }
+    }
+    public abstract class CodeGenGlobalPtrValue : CodeGenValue {
+        public abstract CodeGenValue? Initializer { get; set; }
+        public ICGenType ElementType { get; }
+        protected CodeGenGlobalPtrValue(ICGenType type, ICGenType elementType) : base(type) {
+            ElementType = elementType;
+        }
+    }
+    public abstract class CodeGenConstArrayValue : CodeGenValue {
+        protected CodeGenConstArrayValue(ICGenType type) : base(type) {
+            if(type is not ICGenArrayType) {
+                throw new InvalidOperationException("Const array should be array type");
+            }
+        }
+
+        public abstract ReadOnlySpan<CodeGenValue> Values { get; }
+    }
+    public abstract class CodeGenConstStructValue: CodeGenValue {
+        protected CodeGenConstStructValue(ICGenType type) : base(type) {
+        }
+
+        public abstract ReadOnlySpan<CodeGenValue> Values { get; }
     }
     public abstract class CodeGenValue {
         public ICGenType Type { get; }

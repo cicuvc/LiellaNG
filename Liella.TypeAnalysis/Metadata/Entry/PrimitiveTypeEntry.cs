@@ -1,5 +1,6 @@
 ﻿using Liella.TypeAnalysis.Metadata.Elements;
 using System.Collections.Immutable;
+using System.Collections.ObjectModel;
 using System.Reflection;
 using System.Reflection.Metadata;
 
@@ -34,8 +35,8 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         public ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)> CustomAttributes
             => ImmutableArray<(MethodDefEntry ctor, CustomAttributeValue<ITypeEntry> arguments)>.Empty;
         // Since a primitive type cannot be inherit or implement, nobody try to get impl interface before codegen stage
-        public IEnumerable<ITypeEntry> ImplInterfaces => throw new NotImplementedException(); 
-        
+        public IReadOnlyDictionary<ITypeEntry, ImmutableArray<(IMethodEntry methodDecl, IMethodEntry methodImpl)>> ImplInterfaces => throw new NotImplementedException();
+
         public PrimitiveTypeEntry(TypeEnvironment typeEnv, in PrimitiveTypeEntryTag code) : base(typeEnv)
         {
             m_InvariantPart = code;
