@@ -3,102 +3,14 @@ using System.Runtime.InteropServices;
 
 [assembly: SystemLibraryAttribute()]
 
-namespace System
-{
-    public readonly ref struct ReadOnlySpan<T> {
-        internal readonly ref T _reference;
-        private readonly int _length;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe ReadOnlySpan(void* pointer, int length) {
-            _reference = ref Unsafe.As<byte, T>(ref *(byte*)pointer);
-            _length = length;
-        }
-
-        /// <summary>Creates a new <see cref="ReadOnlySpan{T}"/> of length 1 around the specified reference.</summary>
-        /// <param name="reference">A reference to data.</param>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public ReadOnlySpan(ref readonly T reference) {
-            _reference = ref Unsafe.AsRef(in reference);
-            _length = 1;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal ReadOnlySpan(ref T reference, int length) {
-            _reference = ref reference;
-            _length = length;
-        }
-
-    }
-    public readonly ref struct Span<T> {
-        internal readonly ref T _reference;
-        private readonly int _length;
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public unsafe Span(void* pointer, int length) {
-            _reference = ref Unsafe.As<byte, T>(ref *(byte*)pointer);
-            _length = length;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Span(ref readonly T reference) {
-            _reference = ref Unsafe.AsRef(in reference);
-            _length = 1;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        internal Span(ref T reference, int length) {
-            _reference = ref reference;
-            _length = length;
-        }
-
-    }
-    public class GenericTest<T> {
-        public K F2<K>() => default!;
-    }
-    public class NestGeneric<T1> {
-        public class Nested<T2> {
-            public GenericTest<T2>? Field;
-            public void NestGeneric<T3>() {
-                new GenericTest<T3>().F2<T2>();
-            }
-        }
-    }
-    public class Object 
-    {
-        public virtual int GetHashCode()
-        {
-            return (int)(Unsafe.AsPtr(this) & 0x7FFFFFFF);
-        }
-        public virtual bool Equals(object? obj)
-        {
-            return RuntimeHelpers.Equals(this, obj);
-        }
-        public virtual object? GetType()
-        {
-            return null;
-        }
-        public static unsafe implicit operator void*(object pthis) {
-            return (void*)Unsafe.AsPtr(pthis);
-        }
-    }
-    public struct Void { }
-
-    // The layout of primitive types is special cased because it would be recursive.
-    // These really don't need any fields to work.
-    public struct Boolean { }
-    public struct Char { }
+namespace System {
     public struct SByte { }
     public struct Byte { }
     public struct Int16 { }
     public struct UInt16 { }
-    public struct Int32 {
-        public int m_RealValue;
-        public override int GetHashCode() {
-            return m_RealValue;
-        }
-    }
     public struct UInt32 { }
     public struct Int64 { }
     public struct UInt64 { 
-        public void Test() { }
     }
     public unsafe struct IntPtr
     {

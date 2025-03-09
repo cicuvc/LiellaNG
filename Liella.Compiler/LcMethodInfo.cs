@@ -67,6 +67,7 @@ namespace Liella.Compiler {
             InitState ^= pending ^ complete;
         }
         protected virtual void InitializeFunction() {
+            if(Entry.Name.Contains("Func")) Debugger.Break();
 
             var argumentsType = Entry.Signature.ParameterTypes.Select(e => ResolveContextType(e).GetInstanceTypeEnsureDef());
 

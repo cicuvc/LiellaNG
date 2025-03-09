@@ -82,6 +82,15 @@ namespace Liella.TypeAnalysis.Metadata
                 return !e.Value.AssemblyInfo.IsPruneEnabled;
             })
             .SelectMany(e => e.Value.AllTypes)
+            .Where(e => {
+                var typeDef = e.AsmInfo.MetaReader.GetTypeDefinition(e.TypeDef);
+                foreach(var i in typeDef.GetCustomAttributes()) {
+                    var custAttribute = e.AsmInfo.MetaReader.GetCustomAttribute(i);
+                    var constructor = TokenResolver.ResolveMethodToken(e.AsmInfo, custAttribute.Constructor, GenericTypeContext.EmptyContext, out _); ;
+                    if(constructor.FullName == ".System.NoPruningAttribute@0::.ctor") return true;
+                }
+                return false;
+            })
             .Select(e => TypeDefEntry.Create(EntryManager, e.AsmInfo, e.TypeDef))
             .Concat(Enum.GetValues<PrimitiveTypeCode>().Select(ResolvePrimitiveType))
             .Concat(BuiltinTypes.Select(ResolveSystemTypeFromFullName));

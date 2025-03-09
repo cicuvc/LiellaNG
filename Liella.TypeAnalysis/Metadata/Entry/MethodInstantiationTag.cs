@@ -20,7 +20,7 @@ namespace Liella.TypeAnalysis.Metadata.Entry
             var hashCode = new HashCode();
             hashCode.Add(ExactDeclType);
             hashCode.Add(Definition);
-            hashCode.Add(MethodArguments);
+            foreach(var i in MethodArguments ) hashCode.Add(i); // Don't directly use hash of MethodArguments
             return hashCode.ToHashCode() << 4 | (int)EntryTagType.MethodInstEntry;
         }
 

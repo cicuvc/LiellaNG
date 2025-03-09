@@ -4,6 +4,7 @@ using Liella.Compiler;
 using Liella.TypeAnalysis.Metadata.Elements;
 using Liella.TypeAnalysis.Metadata.Entry;
 using Liella.TypeAnalysis.Utils;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -112,6 +113,8 @@ namespace Liella.Backend.Compiler {
             var constGenerator = CgContext.ConstGenerator;
             var vtableType = CgContext.TypeFactory.CreateStruct($"vtable.{ExactEntry.FullName}");
 
+            if(Entry.IsInterface) Debugger.Break();
+
             var primaryVTableTerms = GetVTableLayoutEnsureDef()
                 .Select(e => {
                     if(e.methodDef is ITypeEntry typeEntry) {
@@ -127,7 +130,7 @@ namespace Liella.Backend.Compiler {
             var primaryTableType = typeFactory.CreateStruct(primaryVTableTerms.ToArray());
 
             var interfaceVTables = Entry.ImplInterfaces
-                .Select(e => ResolveContextType(e.Key).GetVTablePtr().ElementType).ToArray();
+                .Select(e => ResolveContextType(e.Key).GetVirtualTableType().Fields[2].type).ToArray();
 
             vtableType.SetStructBody([
                 typeFactory.Int32, typeFactory.Int32,
@@ -208,9 +211,10 @@ namespace Liella.Backend.Compiler {
                 var iVTable = new CodeGenValue[vtableLayout.Count];
 
                 foreach(var (prototype, impl) in e.Value) {
-                    var implMethodInfo = ResolveContextMethod(impl);
-                    var slotIndex = vtableLayout.FindIndex(e => e.methodDef == prototype);
-                    iVTable[slotIndex] = implMethodInfo.GetMethodValueEnsureDef();
+                    LookupInterfaceSlotIndex(iVTable, prototype, impl, vtableLayout);
+                    //var implMethodInfo = ResolveContextMethod(impl);
+                    //var slotIndex = LookupVtableSlotIndex(prototype, vtableLayout);
+                    //iVTable[slotIndex] = implMethodInfo.GetMethodValueEnsureDef();
                 }
                 iVTable[iVTable.Length - 1] = lcType.GetVTablePtr();
 
@@ -230,9 +234,42 @@ namespace Liella.Backend.Compiler {
 
             return vtableGlobalPtr;
         }
+        protected virtual void LookupInterfaceSlotIndex(CodeGenValue[] iVTable, IMethodEntry declMethod, IMethodEntry implMethod, List<(IEntityEntry methodDef, int index)>? vtableLayout = null) {
+            vtableLayout ??= GetVTableLayoutEnsureDef();
+            var virtualPrototype = declMethod.VirtualMethodPrototype;
 
-        protected virtual int LookupVtableSlotIndex(IMethodEntry entry) {
-            var vtableLayout = GetVTableLayoutEnsureDef();
+            var layoutSize = vtableLayout.Count;
+            var satisifiedAtLeastOnce = false;
+            for(var i = 0; i < layoutSize; i++) {
+                var (methodDef, offset) = vtableLayout[i];
+
+                var vtableMethodDef = methodDef is MethodInstantiation inst ? inst.Definition : methodDef;
+
+                if(vtableMethodDef != virtualPrototype) continue;
+
+                if((declMethod is not MethodInstantiation) && (methodDef is not MethodInstantiation)) {
+                    iVTable[i] = ResolveContextMethod(implMethod).GetMethodValueEnsureDef();
+                    satisifiedAtLeastOnce = true;
+                }
+
+                if((declMethod is MethodInstantiation entryInst) && (methodDef is MethodInstantiation vInst)) {
+                    var genericArgTuples = entryInst.ActualArguments
+                        .Zip(vInst.ActualArguments)
+                        .Select((e) => e.First is IGenericPlaceholder ? (e.Second, e.Second) : e);
+
+                    if(genericArgTuples.All(e=>e.Item1 == e.Item2)) {
+                        var exactImplMethod = MethodInstantiation.Create(Context.TypeEnv.EntryManager, ExactEntry, (MethodDefEntry)implMethod, genericArgTuples.Select(e => e.Item1).ToImmutableArray());
+                        iVTable[i] = ResolveContextMethod(exactImplMethod).GetMethodValueEnsureDef();
+                        satisifiedAtLeastOnce = true;
+                    }
+                }
+
+            }
+
+            if(!satisifiedAtLeastOnce)  throw new KeyNotFoundException();
+        }
+        protected virtual int LookupVtableSlotIndex(IMethodEntry entry, List<(IEntityEntry methodDef, int index)>? vtableLayout = null) {
+            vtableLayout ??= GetVTableLayoutEnsureDef();
             var virtualPrototype = entry.VirtualMethodPrototype;
 
             var layoutSize = vtableLayout.Count;
@@ -251,6 +288,12 @@ namespace Liella.Backend.Compiler {
                         return i;
                     }
                 }
+
+                //if((entry is MethodDefEntry entryDef) && (methodDef is MethodInstantiation mInst)) {
+                //    if(entryInst.ActualArguments.SequenceEqual(vInst.ActualArguments)) {
+                //        return i;
+                //    }
+                //}
             }
 
             throw new KeyNotFoundException();

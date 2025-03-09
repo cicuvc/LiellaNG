@@ -26,9 +26,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="System\Boolean.cs" />
+    <Compile Include="System\Char.cs" />
+    <Compile Include="System\Int32.cs" />
     <Compile Include="System\Math.cs" />
     <Compile Include="System\BaseTypes.cs" />
     <Compile Include="System\IDisposable.cs" />
+    <Compile Include="System\NoPruningAttribue.cs" />
+    <Compile Include="System\Object.cs" />
+    <Compile Include="System\ReadOnlySpan.cs" />
     <Compile Include="System\Reflection\ReflectionBase.cs" />
     <Compile Include="System\Runtime\CompilerServices\ExtensionAttribute.cs" />
     <Compile Include="System\Runtime\CompilerServices\IsByRefLikeAttribute.cs" />
@@ -46,6 +52,8 @@
     <Compile Include="System\Runtime\InteropServices\OutAttribute.cs" />
     <Compile Include="System\Runtime\InteropServices\StructLayout.cs" />
     <Compile Include="System\Runtime\Versioning\TargetFrameworkAttribute.cs" />
+    <Compile Include="System\Span.cs" />
+    <Compile Include="System\Void.cs" />
   </ItemGroup>
 
 </Project>

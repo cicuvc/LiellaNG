@@ -99,8 +99,12 @@ namespace Liella.TypeAnalysis.Metadata.Entry
 
             VirtualMethods = Methods.Where(e => e.GetDetails().MethodDef.Attributes.HasFlag(MethodAttributes.Virtual)).ToImmutableArray();
 
-            //foreach(var i in VirtualMethods.Where(e => e.Attributes.HasFlag(MethodAttributes.NewSlot)))
-            //    DerivedEntry.Add(i);
+            foreach(var i in VirtualMethods) {
+                Debug.Assert(i.VirtualMethodPrototype is not null);
+
+                DerivedEntry.Add(i.VirtualMethodPrototype);
+                DerivedEntry.Add(i);
+            }
 
             CustomAttributes = TypeDef.GetCustomAttributes().Select(e => {
                 var customAttribute = entry.AsmInfo.MetaReader.GetCustomAttribute(e);
@@ -126,7 +130,15 @@ namespace Liella.TypeAnalysis.Metadata.Entry
                     implList.Add((methodDecl, methodImpl: methodBody));
                 }
 
+                var exactCurrentType = (ITypeEntry)Entry;
+                if(TypeArguments.Length != 0) {
+                    exactCurrentType = TypeInstantiationEntry.Create(typeEnv.EntryManager, Entry, TypeArguments, true);
+                }
+
+
                 foreach(var interfaceType in ImplInterfaces) {
+                    if(interfaceType.Name.Contains("IBasic")) Debugger.Break();
+
                     var implList = interfaceImpls[interfaceType];
                     var genericLookupTable = interfaceType is TypeInstantiationEntry interfaceInst ? 
                         interfaceInst.FormalArguments.Zip(interfaceInst.ActualArguments)
@@ -151,8 +163,18 @@ namespace Liella.TypeAnalysis.Metadata.Entry
                             }
                         }
 
+                        var decoratedPrototype = (IMethodEntry)j;
+
+                        if(interfaceType is TypeInstantiationEntry interfaceTypeInst) {
+                            decoratedPrototype = MethodInstantiation.Create(typeEnv.EntryManager, interfaceTypeInst, j, j.GetDetails().MethodGenericParams);
+                        }
+
                         if(localMethod is not null) {
-                            implList.Add((j, localMethod));
+                            typeEnv.Collector.RegisterVirtualChain((MethodDefEntry)localMethod, j);
+
+                            implList.Add((decoratedPrototype, localMethod));
+
+                            DerivedEntry.Add(j);
                         } else {
                             throw new NotSupportedException("Unknown impl");
                         }

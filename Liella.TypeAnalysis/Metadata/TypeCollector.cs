@@ -56,7 +56,7 @@ namespace Liella.TypeAnalysis.Metadata
         {
             if (ActivatedEntity.Contains(entry)) return;
 
-
+            
             if (entry.IsGenericInstantiation)
             {
                 var primaryInst = ((IInstantiationEntry)entry).AsPrimary(TypeEnv.EntryManager);
@@ -185,7 +185,6 @@ namespace Liella.TypeAnalysis.Metadata
                     var declTypeNode = (SCCNode<IEntityEntry>?)null;
 
                     var instantiationNode = (IInstantiationEntry)i.InternalNodes.First();
-                    if(instantiationNode.Name.Contains("CDerive")) Debugger.Break();
                     var primaryNode = instantiationNode.IsPrimary;
 
                     localInstantiationCache.Clear();

@@ -4,6 +4,7 @@ using Liella.TypeAnalysis.Metadata.Elements;
 using Liella.TypeAnalysis.Metadata.Entry;
 using System.Collections.Frozen;
 using System.Collections.Immutable;
+using System.Diagnostics;
 
 /*
  * A CLR type is mapped into 5 native types
@@ -36,6 +37,15 @@ namespace Liella.Backend.Compiler {
             return base.ResolveContextType(realTypeEntry);
         }
 
-        
+        public override LcMethodInfo ResolveContextMethod(IMethodEntry entry) {
+            if(entry is MethodDefEntry methodDef) {
+                if(methodDef.DeclType == Entry) {
+                    entry = MethodInstantiation.Create(Context.TypeEnv.EntryManager, ExactEntry, methodDef, []);
+                    Debugger.Break();
+                }
+            }
+
+            return base.ResolveContextMethod(entry);
+        }
     }
 }
