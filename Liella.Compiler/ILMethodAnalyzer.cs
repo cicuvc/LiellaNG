@@ -1,6 +1,8 @@
-﻿using Liella.TypeAnalysis.Utils;
+﻿using Liella.Backend.Components;
+using Liella.TypeAnalysis.Utils;
 using Liella.TypeAnalysis.Utils.Graph;
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
@@ -10,12 +12,44 @@ using System.Threading.Tasks;
 
 namespace Liella.Backend.Compiler {
     public class ILMethodBasicBlock {
+        public static FrozenDictionary<StackBehaviour, int> StackDepthDelta = (new Dictionary<StackBehaviour, int>() {
+            { StackBehaviour.Pop0, 0 },
+            { StackBehaviour.Pop1, -1 },
+            { StackBehaviour.Pop1_pop1, -2 },
+            { StackBehaviour.Popi, -1 },
+            { StackBehaviour.Popi_pop1, -2},
+            { StackBehaviour.Popi_popi, -2 },
+            { StackBehaviour.Popi_popi8, -2 },
+            { StackBehaviour.Popi_popi_popi, -3 },
+            { StackBehaviour.Popi_popr4, -2 },
+            { StackBehaviour.Popi_popr8, -2 },
+            { StackBehaviour.Popref, -1 },
+            { StackBehaviour.Popref_pop1, -2 },
+            { StackBehaviour.Popref_popi, -2 },
+            { StackBehaviour.Popref_popi_pop1, -3 },
+            { StackBehaviour.Popref_popi_popi, -3 },
+            { StackBehaviour.Popref_popi_popi8, -3 },
+            { StackBehaviour.Popref_popi_popr4, -3 },
+            { StackBehaviour.Popref_popi_popr8, -3 },
+            { StackBehaviour.Popref_popi_popref, -3 },
+            { StackBehaviour.Push0, 0 },
+            { StackBehaviour.Push1, 1 },
+            { StackBehaviour.Push1_push1, 2 },
+            { StackBehaviour.Pushi, 1 },
+            { StackBehaviour.Pushi8, 1 },
+            { StackBehaviour.Pushr4, 1 },
+            { StackBehaviour.Pushr8, 1 },
+            { StackBehaviour.Pushref, 1 },
+        }).ToFrozenDictionary();
         public ILMethodAnalyzer Analyzer { get; }
         public int StartIndex { get; }
         public int EndIndex { get; }
         public int Length => EndIndex - StartIndex;
         public ILMethodBasicBlock? TrueExit { get; set; }
         public ILMethodBasicBlock? FalseExit { get; set; }
+        public int MinStackDepth { get; }
+        public int MaxStackDepth { get; }
+        public int FinalStackDepthDelta { get; }
         public (int offset, ILOpCode opcode, ulong operand) this[int index] {
             get {
                 if(EndIndex - StartIndex <= index) {
@@ -28,11 +62,34 @@ namespace Liella.Backend.Compiler {
             Analyzer = analyzer;
             StartIndex = startIndex;
             EndIndex = endIndex;
+
+            var initStackDepth = 0;
+            var minStackDepth = int.MaxValue;
+            var maxStackDepth = -int.MaxValue;
+            var instructions = analyzer.Decoder.Instructions[startIndex..endIndex];
+
+            foreach(var (_, code, _) in instructions) {
+                var opCodeInfo = ILDecoder.OpCodeMap[code];
+                var pushDelta = StackDepthDelta.TryGetValue(opCodeInfo.StackBehaviourPush, out var pushD) ? pushD : throw new NotImplementedException();
+                var popDelta = StackDepthDelta.TryGetValue(opCodeInfo.StackBehaviourPop, out var popD) ? popD : throw new NotImplementedException();
+
+                initStackDepth += popDelta;
+                minStackDepth = Math.Min(minStackDepth, initStackDepth);
+
+                initStackDepth += pushDelta;
+                maxStackDepth = Math.Max(maxStackDepth, initStackDepth);
+            }
+
+            MinStackDepth = minStackDepth;
+            MaxStackDepth = maxStackDepth;
+            FinalStackDepthDelta = initStackDepth;
         }
 
+        
     }
     public class ILMethodAnalyzer : FwdGraph<ILMethodBasicBlock, bool> {
         public ILDecoder Decoder { get; }
+        public ILMethodBasicBlock EntryBlock { get; } = null!;
         public ILMethodAnalyzer(ILDecoder decoder) {
             Decoder = decoder;
 
@@ -88,6 +145,8 @@ namespace Liella.Backend.Compiler {
                     AddNode(basicBlock);
 
                     blocks.Add(basicBlock.StartIndex, basicBlock);
+
+                    if(basicBlock.StartIndex == 0) EntryBlock = basicBlock;
                 } else {
                     throw new InvalidProgramException("Broken control flow structure");
                 }
