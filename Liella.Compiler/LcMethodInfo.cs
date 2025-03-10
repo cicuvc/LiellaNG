@@ -31,6 +31,11 @@ namespace Liella.Compiler {
         protected ICGenFunctionType? m_MethodType;
         protected CodeGenFunction? m_MethodFunction;
         public LcMethodInitStage InitState { get; protected set; }
+
+
+
+        public ImmutableArray<LcTypeInfo> ArgumentTypes { get; }
+        public ImmutableArray<LcTypeInfo> LocalVariableTypes { get; }
         public LcMethodInfo(LcTypeInfo type, IMethodEntry entry,LcCompileContext context, CodeGenContext cgContext) {
             Context = context;
             CgContext = cgContext;
@@ -53,7 +58,11 @@ namespace Liella.Compiler {
             if(HasBody)
                 ILCodeAnalyzer = new(entry.Decoder);
 
-            
+            var argumentTypeBuilder = entry.Signature.ParameterTypes.Select(ResolveContextType);
+            if(IsInstanceMethod) argumentTypeBuilder = argumentTypeBuilder.Prepend(DeclType);
+            ArgumentTypes = argumentTypeBuilder.ToImmutableArray();
+            LocalVariableTypes = entry.LocalVariableTypes.Select(ResolveContextType).ToImmutableArray();
+
         }
         protected bool CheckTypeInitialized(LcMethodInitStage pending, LcMethodInitStage complete) {
             if(InitState.HasFlag(complete)) return true;
@@ -67,8 +76,6 @@ namespace Liella.Compiler {
             InitState ^= pending ^ complete;
         }
         protected virtual void InitializeFunction() {
-            if(Entry.Name.Contains("Func")) Debugger.Break();
-
             var argumentsType = Entry.Signature.ParameterTypes.Select(e => ResolveContextType(e).GetInstanceTypeEnsureDef());
 
             if(IsInstanceMethod) argumentsType = argumentsType.Prepend(DeclType.GetReferenceTypeEnsureDef());

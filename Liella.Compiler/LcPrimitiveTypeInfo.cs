@@ -21,8 +21,10 @@ using System.Reflection.Metadata;
 namespace Liella.Backend.Compiler {
     public class LcPrimitiveTypeInfo: LcTypeDefInfo {
         public PrimitiveTypeEntry PrimitiveType { get; }
+        public PrimitiveTypeCode PrimitiveCode { get; }
         public LcPrimitiveTypeInfo(TypeDefEntry implType, PrimitiveTypeEntry primitiveType, LcCompileContext typeContext, CodeGenContext cgContext) :base(implType, typeContext, cgContext) {
             PrimitiveType = primitiveType;
+            PrimitiveCode = primitiveType.InvariantPart.TypeCode;
         }
         protected override ICGenType SetupInstanceType() {
             return PrimitiveType.InvariantPart.TypeCode switch {

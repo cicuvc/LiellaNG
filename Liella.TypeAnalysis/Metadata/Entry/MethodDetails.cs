@@ -102,6 +102,7 @@ namespace Liella.TypeAnalysis.Metadata.Entry
                 VirtualMethodPrototype = Entry;
             }
 
+            var isInstanceMethod = MethodDef.Attributes.HasFlag(MethodAttributes.Static);
 
             if (ILCode is not null)
             {
@@ -142,6 +143,20 @@ namespace Liella.TypeAnalysis.Metadata.Entry
 
                                 break;
                             }
+                    }
+
+                    
+                    if(opcode == ILOpCode.Ldloca || opcode == ILOpCode.Ldloca_s) {
+                        var localType = LocalVariableTypes[(int)operand];
+                        DerivedEntry.Add(ReferenceTypeEntry.Create(typeEnv.EntryManager, localType));
+                    }
+
+                    if(opcode == ILOpCode.Ldarga || opcode == ILOpCode.Ldarga_s) {
+                        var argType = (isInstanceMethod && operand == 0) ? 
+                            DeclType :
+                            Signature.ParameterTypes[((int)operand) - (isInstanceMethod ? 1 : 0)];
+
+                        DerivedEntry.Add(ReferenceTypeEntry.Create(typeEnv.EntryManager, argType));
                     }
                 }
             }

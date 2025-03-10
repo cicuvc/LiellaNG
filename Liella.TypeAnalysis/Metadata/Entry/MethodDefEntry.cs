@@ -26,6 +26,8 @@ namespace Liella.TypeAnalysis.Metadata.Entry
 
         public IMethodEntry? VirtualMethodPrototype => GetDetails().VirtualMethodPrototype;
 
+        public IEnumerable<ITypeEntry> LocalVariableTypes => GetDetails().LocalVariableTypes;
+
         private MethodDefEntry(TypeEnvironment typeEnv, in MethodDefTag tag) : base(typeEnv)
         {
             m_InvariantPart = tag;

@@ -19,7 +19,15 @@ using Liella.TypeAnalysis.Metadata.Entry;
  */
 
 namespace Liella.Backend.Compiler {
-    public class LcPointerTypeInfo : LcTypeInfo {
+    //public class LcTemporaryReferenceTypeInfo : LcReferenceTypeInfo {
+    //    protected static ReferenceTypeEntry GetReferenceType(LcCompileContext context, LcTypeInfo elementType) {
+    //        if(elementType is LcReferenceTypeInfo refType) return (ReferenceTypeEntry)refType.Entry;
+            
+    //    }
+    //    public LcTemporaryReferenceTypeInfo(LcTypeInfo elementType, LcCompileContext typeContext, CodeGenContext cgContext) : base(entry, typeContext, cgContext) {
+    //    }
+    //}
+    public class LcReferenceTypeInfo : LcTypeInfo {
         public override bool IsStorageRequired => false;
         public bool IsTypeDefined { get; protected set; }
         public CodeGenContext CgContext { get; }
@@ -27,9 +35,8 @@ namespace Liella.Backend.Compiler {
 
         public override ITypeEntry ExactEntry => throw new NotImplementedException();
 
-        public LcPointerTypeInfo(PointerTypeEntry entry, LcCompileContext typeContext, CodeGenContext cgContext) :base(entry, typeContext) {
+        public LcReferenceTypeInfo(ReferenceTypeEntry entry, LcCompileContext typeContext, CodeGenContext cgContext) : base(entry, typeContext) {
             CgContext = cgContext;
-
             ElementEntry = entry.InvariantPart.ElementType;
         }
 
@@ -37,7 +44,7 @@ namespace Liella.Backend.Compiler {
             return CgContext.TypeFactory.CreatePointer(Context.NativeTypeMap[ElementEntry].GetInstanceTypeEnsureDef());
         }
 
-        protected override ICGenNamedStructType SetupDataStorage() 
+        protected override ICGenNamedStructType SetupDataStorage()
             => throw new NotSupportedException();
         protected override ICGenNamedStructType SetupStaticStorage()
             => throw new NotSupportedException();

@@ -12,5 +12,6 @@ namespace Liella.TypeAnalysis.Metadata.Elements
         public MethodSignature<ITypeEntry> Signature { get; }
         public IMethodEntry? VirtualMethodPrototype { get; }
         public MethodImplAttributes ImplAttributes { get; }
+        public IEnumerable<ITypeEntry> LocalVariableTypes { get; }
     }
 }

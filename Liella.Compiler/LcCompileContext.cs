@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -35,12 +36,14 @@ namespace Liella.Compiler
         public CodeGenModule Module { get; }
         public CodeGenFactory Backend { get; }
         public CodeGenContext Context { get; }
+        public IReadOnlyDictionary<PrimitiveTypeCode, LcPrimitiveTypeInfo> PrimitiveTypes => m_PrimitiveTypes;
         public IReadOnlyDictionary<ITypeEntry, LcTypeInfo> NativeTypeMap => m_NativeTypeMap;
         public IReadOnlyDictionary<IMethodEntry, LcMethodInfo> NativeMethodMap => m_MethodMap;
         public IReadOnlyList<LcTypeInfo> InterfaceRegistry => m_InterfaceRegistry;
         
         protected Dictionary<ITypeEntry, LcTypeInfo> m_NativeTypeMap = new(new TypeEntryComparer());
         protected Dictionary<IMethodEntry, LcMethodInfo> m_MethodMap = new();
+        protected Dictionary<PrimitiveTypeCode, LcPrimitiveTypeInfo> m_PrimitiveTypes = new();
         protected List<LcTypeInfo> m_InterfaceRegistry = new();
 
         public ICGenStructType InterfaceLutType { get; }
@@ -66,17 +69,24 @@ namespace Liella.Compiler
         }
 
         public void StartCompilation() {
+            var primitiveImplTypes = TypeEnv.Collector.ActivatedEntity.OfType<PrimitiveTypeEntry>().Select(e => e.GetDetails().DefinitionType);
+            foreach(var i in primitiveImplTypes) TypeEnv.Collector.ActivatedEntity.Remove(i);
+
             foreach(var i in TypeEnv.Collector.ActivatedEntity) {
                 if(i is ITypeEntry typeEntry) {
                     if(typeEntry is TypeDefEntry typeDef) {
                         if(typeDef.TypeArguments.Length > 0) continue;
                         m_NativeTypeMap.Add(typeEntry, new LcTypeDefInfo(typeDef, this, Context));
                     }else if(typeEntry is PrimitiveTypeEntry primEntry) {
-                        m_NativeTypeMap.Add(typeEntry, new LcPrimitiveTypeInfo(primEntry.GetDetails().DefinitionType, primEntry, this, Context));
+                        var primitiveImplType = primEntry.GetDetails().DefinitionType;
+                        var primitiveType = new LcPrimitiveTypeInfo(primitiveImplType, primEntry, this, Context);
+
+                        m_PrimitiveTypes.Add(primEntry.InvariantPart.TypeCode, primitiveType);
+                        m_NativeTypeMap.Add(typeEntry, primitiveType);
                     }else if(typeEntry is PointerTypeEntry pointerEntry) {
                         m_NativeTypeMap.Add(typeEntry, new LcPointerTypeInfo(pointerEntry, this, Context));
                     } else if(typeEntry is ReferenceTypeEntry refEntry) {
-                        m_NativeTypeMap.Add(typeEntry, new LcPointerTypeInfo(refEntry, this, Context));
+                        m_NativeTypeMap.Add(typeEntry, new LcReferenceTypeInfo(refEntry, this, Context));
                     } else if (typeEntry is TypeInstantiationEntry instEntry) {
                         m_NativeTypeMap.Add(typeEntry, new LcTypeInstInfo(instEntry, instEntry.InvariantPart.DefinitionType, this, Context));
                     }

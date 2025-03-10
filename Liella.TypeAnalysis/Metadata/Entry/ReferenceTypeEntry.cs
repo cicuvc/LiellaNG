@@ -62,6 +62,7 @@ namespace Liella.TypeAnalysis.Metadata.Entry {
             return new(typeEnv, key.InvariantPart);
         }
         public static ReferenceTypeEntry Create(EntityEntryManager manager, ITypeEntry baseType) {
+            if(baseType is ReferenceTypeEntry refType) return refType;
             return CreateEntry(manager, new(baseType));
         }
 

@@ -10,6 +10,9 @@ namespace Payload
     public struct TestStruct {
         public int A;
         public int B;
+        public void Q() {
+            A++;
+        }
     }
     public class GenericClass<T> {
         public T Value;
@@ -56,6 +59,11 @@ namespace Payload
 
     [NoPruning]
     public unsafe class App {
+        public uint Add(uint q) {
+            var g = new TestStruct();
+            g.Q();
+            return q + 4;
+        }
         public static void CallMethod0(CBase x) {
             x.NonGVM();
         }
