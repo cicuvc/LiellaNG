@@ -1,8 +1,6 @@
 # LiellaNG: Lightweight Intermediate-code transform Engine for Low-Level Assembling Next Generation
 
-Liella is an AOT compiler designed for transforming Microsoft CLI Intermediate code into highly-optimized native code. 
-Liella is oriented to low-level scenarios like system development, providing direct control to instruction-level  
-operations as well as advanced features such as object-oriented programming, generic types and functional features.
+Liella is an AOT compiler designed for transforming Microsoft CLI Intermediate code into highly-optimized native code. Liella is oriented to low-level scenarios like system development, providing direct control to instruction-level  operations as well as advanced features such as object-oriented programming, generic types and functional features.
 
 🚧 Development is in progress. 
 
