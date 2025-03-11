@@ -105,7 +105,7 @@ namespace Liella.Compiler {
             
             return m_MethodFunction!;
         }
-        protected virtual LcTypeInfo ResolveContextType(ITypeEntry entry) {
+        public virtual LcTypeInfo ResolveContextType(ITypeEntry entry) {
             return DeclType.ResolveContextType(entry)!;
         }
         protected virtual LcMethodInfo ResolveVirtualPrototypeMethod() {
@@ -116,7 +116,8 @@ namespace Liella.Compiler {
             return Context.NativeMethodMap[prototype!];
         }
         public void GenerateCode() {
-
+            var codeGenerator = new CodeGenerator(this);
+            
         }
     }
 }

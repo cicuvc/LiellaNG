@@ -2,19 +2,38 @@
 using Liella.Backend.Components;
 using Liella.Backend.Types;
 using System;
+using System.Collections;
 using System.Collections.Frozen;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Liella.Compiler {
+    public struct BlockInputTypeList : IEquatable<BlockInputTypeList> {
+        private ImmutableArray<LcTypeInfo> m_TypeArray;
+        public BlockInputTypeList(ImmutableArray<LcTypeInfo> typeArray) {
+            m_TypeArray = typeArray;
+        }
+        public LcTypeInfo this[int index] => m_TypeArray[index];
+        public override int GetHashCode() {
+            var hashCode = new HashCode();
+            foreach(var i in m_TypeArray) hashCode.Add(i);
+            return hashCode.ToHashCode();
+        }
+        public bool Equals(BlockInputTypeList other) {
+            return m_TypeArray.SequenceEqual(other.m_TypeArray);
+        }
+    }
     public struct CodeBasicBlockIO {
-        public ICGenType[] BlockInputTypes { get; }
+        
+        public HashSet<BlockInputTypeList> BlockInputTypes { get; }
         public CodeGenPhiValue[] BlockInputs { get; }
         public CodeGenValue[] BlockOutputs { get; }
         public CodeBasicBlockIO(int maxInputSize, int maxOutputSize) {
-            BlockInputTypes = new ICGenType[maxInputSize];
+            BlockInputTypes = new HashSet<BlockInputTypeList>();
             BlockInputs = new CodeGenPhiValue[maxInputSize];
             BlockOutputs = new CodeGenValue[maxOutputSize];
         }
@@ -24,8 +43,8 @@ namespace Liella.Compiler {
         public CodeGenBasicBlock CodeGenBlock { get; }
         public CodeBasicBlockIO BlockIO { get; protected set; }
         public int RequiredInputSize { get; protected set; }
-        public int UpdateCounter { get; protected set; }
-        public bool InQueue { get; protected set; }
+        public int UpdateCounter { get; set; }
+        public bool InQueue { get; set; }
         public CodeBasicBlockContext(ILMethodBasicBlock basicBlock,CodeGenBasicBlock codeGenBlock) {
             BasicBlock = basicBlock;
             CodeGenBlock = codeGenBlock;
@@ -34,12 +53,6 @@ namespace Liella.Compiler {
         }
         public void MakeIOBuffer(FrozenDictionary<ILMethodBasicBlock, CodeBasicBlockContext> blockMap) {
             BlockIO = new CodeBasicBlockIO(RequiredInputSize, GetMaxSuccessorUseInput(blockMap));
-        }
-
-        protected void EnqueueBlock(Queue<CodeBasicBlockContext> updateQueue) {
-            if(InQueue) return;
-            InQueue = true;
-            updateQueue.Enqueue(this);
         }
         
         protected int GetMaxSuccessorUseInput(FrozenDictionary<ILMethodBasicBlock, CodeBasicBlockContext> blockMap) {
@@ -91,7 +104,12 @@ namespace Liella.Compiler {
                 RequiredInputSize = newRequiredInputSize;
 
                 foreach(var prev in BasicBlock.Analyzer.GetInvEdge(BasicBlock)) {
-                    blockMap[prev.Target].EnqueueBlock(updateQueue);
+                    var prevBlock = blockMap[prev.Target];
+                    if(!prevBlock.InQueue) {
+                        InQueue = true;
+
+                        updateQueue.Enqueue(prevBlock);
+                    }
                 }
             }
         }
@@ -102,9 +120,11 @@ namespace Liella.Compiler {
             if(!method.HasBody) 
                 throw new ArgumentException("Unable to generate code for dummy function");
             Method = method;
+
+            SetupFunctionInfo();
         }
 
-        public void GenerateCode(ICodeGenerator emitter) {
+        public void SetupFunctionInfo() {
             var functionBody = Method.GetMethodValueEnsureDef();
 
             var backendBasicBlocks = Method.ILCodeAnalyzer!
@@ -126,11 +146,120 @@ namespace Liella.Compiler {
                     throw new InvalidProgramException();
                 }
             }
-            foreach(var i in updateQueue) {
-                i.MakeIOBuffer(backendBasicBlocks);
+            foreach(var (k, v) in backendBasicBlocks) {
+                v.MakeIOBuffer(backendBasicBlocks);
             }
 
+            /** Stack slot type collection stage
+             * Since CFG may not be DAG, we cannot do topo-sort. To collect stack-propagated
+             * types, the only thing to be promised is for every basic block at least one of its
+             * predecessors got accessed before. So we start from entry block and do bfs
+             */
 
+
+            var typeCheckQueue = new Queue<(CodeBasicBlockContext block, ImmutableArray<LcTypeInfo>)>();
+            var entryBlock = backendBasicBlocks[Method.ILCodeAnalyzer!.EntryBlock];
+            entryBlock.InQueue = true;
+            typeCheckQueue.Enqueue((entryBlock, ImmutableArray<LcTypeInfo>.Empty));
+
+            var codeGenEvalContext = new CodeGenEvaluationContext(Method.Context);
+            codeGenEvalContext.IsTypeOnlyStage = true;
+            codeGenEvalContext.CurrentMethod = Method;
+
+            var instDispatcher = Method.Context.CodeProcessor;
+
+            while(updateQueue.Count != 0) {
+                var (currentBlock, currentStack) = typeCheckQueue.Dequeue();
+                currentBlock.InQueue = false;
+
+                var blockInputTypes = currentBlock.BlockIO.BlockInputTypes;
+                var reuqiredInputSize = currentBlock.RequiredInputSize;
+                if(reuqiredInputSize > currentStack.Length)
+                    throw new InvalidProgramException("Stack inputs insufficient for current block");
+
+                var inputTypeList = new BlockInputTypeList(currentStack[..reuqiredInputSize]);
+
+                if(!blockInputTypes.Contains(inputTypeList)) {
+                    blockInputTypes.Add(inputTypeList);
+
+                    codeGenEvalContext.TypeStack.Clear();
+                    foreach(var i in currentStack.Reverse()) codeGenEvalContext.TypeStack.Push(i);
+
+                    foreach(var (offset, code, operand) in currentBlock.BasicBlock) {
+                        instDispatcher.Emit(code, operand, codeGenEvalContext);
+                    }
+
+                    var finalStack = codeGenEvalContext.TypeStack.ToImmutableArray();
+
+                    if(currentBlock.BasicBlock.TrueExit is not null) {
+                        var trueBlock = backendBasicBlocks[currentBlock.BasicBlock.TrueExit];
+                        if(!trueBlock.InQueue) {
+                            trueBlock.InQueue = true;
+                            typeCheckQueue.Enqueue((trueBlock, finalStack));
+                        }
+                    }
+
+                    if(currentBlock.BasicBlock.FalseExit is not null) {
+                        var falseBlock = backendBasicBlocks[currentBlock.BasicBlock.FalseExit];
+                        if(!falseBlock.InQueue) {
+                            falseBlock.InQueue = true;
+                            typeCheckQueue.Enqueue((falseBlock, finalStack));
+                        }
+                    }
+                }
+            }
+
+            // Check input type compatibliity
+            foreach(var (k,v) in backendBasicBlocks) {
+                using var blockBuilder = v.CodeGenBlock.GetCodeGenerator();
+                var candidateInputTypes = v.BlockIO.BlockInputTypes.ToArray();
+                for(var i = 0; i < v.RequiredInputSize; i++) {
+                    var types = candidateInputTypes.Select(e => e[i]).ToArray();
+                    var slotType = MergeInputTypes(types);
+
+                    v.BlockIO.BlockInputs[i] = blockBuilder.CreatePhi(slotType);
+                }
+            }
+        }
+
+        private ICGenType MergeInputTypes(LcTypeInfo[] types) {
+            var typeFactory = Method.CgContext.TypeFactory;
+            if(types.All(e=>e is LcPointerTypeInfo)) {
+                return typeFactory.CreatePointer(typeFactory.Void);
+            }
+            if(types.All(e => e is LcReferenceTypeInfo)) {
+                return typeFactory.CreatePointer(typeFactory.Void);
+            }
+            if(types.All(e => e is LcPrimitiveTypeInfo { PrimitiveCode: PrimitiveTypeCode.Int32 })) {
+                return typeFactory.Int32;
+            }
+            if(types.All(e => e is LcPrimitiveTypeInfo { PrimitiveCode: PrimitiveTypeCode.Int64 })) {
+                return typeFactory.CreateIntType(64, false);
+            }
+            if(types.All(e => e is LcPrimitiveTypeInfo { PrimitiveCode: PrimitiveTypeCode.IntPtr })) {
+                var defaultPtrSize = Method.CgContext.TypeManager.Configuration.PointerSize;
+                return typeFactory.CreateIntType(defaultPtrSize * 8, false);
+            }
+            if(types.All(e => e is LcPrimitiveTypeInfo { PrimitiveCode: PrimitiveTypeCode.Single })) {
+                return typeFactory.Float32;
+            }
+            if(types.All(e => e is LcPrimitiveTypeInfo { PrimitiveCode: PrimitiveTypeCode.Double })) {
+                return typeFactory.Float64;
+            }
+            if(types.All(e => e is LcTypeDefInfo { Entry: { IsValueType: true } })) {
+                var firstType = types.First().Entry;
+                if(types.All(e=>e.Entry == firstType)) {
+                    return Method.ResolveContextType(firstType).GetInstanceTypeEnsureDef();
+                }
+            }
+            if(types.All(e => e is LcTypeDefInfo { Entry: { IsValueType: false } })) {
+                return Method.Context.PrimitiveTypes[PrimitiveTypeCode.Object].GetInstanceTypeEnsureDef();
+            }
+
+            throw new NotSupportedException();
+        }
+        public void GenerateCode(ICodeGenerator emitter) {
+            
 
         }
 

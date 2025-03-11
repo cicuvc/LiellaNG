@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Liella.Backend.Types;
 using Liella.Backend.Components;
 using Liella.Compiler;
+using System.Collections;
 
 namespace Liella.Backend.Compiler {
     public class CodeGenEvaluationContext {
@@ -33,10 +34,14 @@ namespace Liella.Backend.Compiler {
     public interface ICodeProcessor {
         string Name { get; }
     }
-    public class ILCodeProcessor {
+    public class ILCodeProcessor :IEnumerable<ICodeProcessor> {
         protected delegate void EmitHandler(ILOpCode opcode, ulong operand, CodeGenEvaluationContext context);
         private Dictionary<ILOpCode, EmitHandler> m_DispatchMap = new Dictionary<ILOpCode, EmitHandler>();
-        public void RegisterCodeProcessor(ICodeProcessor processor) {
+        private HashSet<ICodeProcessor> m_Processors = new();
+        public void Add(ICodeProcessor processor) {
+            if(m_Processors.Contains(processor)) return;
+            m_Processors.Add(processor);
+
             var type = processor.GetType();
             var methods = type.GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
             foreach(var i in methods) {
@@ -56,5 +61,9 @@ namespace Liella.Backend.Compiler {
                 throw new NotImplementedException($"Handler for MSIL code {code} not yet implemented");
             }
         }
+
+        public IEnumerator<ICodeProcessor> GetEnumerator() => m_Processors.GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => m_Processors.GetEnumerator();
     }
 }

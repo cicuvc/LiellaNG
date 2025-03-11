@@ -1,6 +1,7 @@
 ﻿using Liella.Backend.Compiler;
 using Liella.Backend.Components;
 using Liella.Backend.Types;
+using Liella.Compiler.ILProcessors;
 using Liella.TypeAnalysis.Metadata;
 using Liella.TypeAnalysis.Metadata.Elements;
 using Liella.TypeAnalysis.Metadata.Entry;
@@ -47,6 +48,8 @@ namespace Liella.Compiler
         protected List<LcTypeInfo> m_InterfaceRegistry = new();
 
         public ICGenStructType InterfaceLutType { get; }
+
+        public ILCodeProcessor CodeProcessor { get; }
         public LcCompileContext(TypeEnvironment typeEnv, string projName, string target, string backend = "llvm") {
             TypeEnv = typeEnv;
 
@@ -62,6 +65,13 @@ namespace Liella.Compiler
 
             var typeFactory = Context.TypeFactory;
             InterfaceLutType = typeFactory.CreateStruct([typeFactory.Int32, typeFactory.Int32], "interface_lut");
+
+            CodeProcessor = new() { 
+                new ArithmeticEmit(),
+                new LocalsEmit(),
+                new BitwiseEmit(),
+                new BinaryComparsionEmit()
+            };
         }
         public int RegisterInterface(LcTypeInfo typeInfo) {
             m_InterfaceRegistry.Add(typeInfo);
@@ -146,6 +156,11 @@ namespace Liella.Compiler
                 if(type.IsStorageRequired) {
                     type.GetVTablePtr();
                 }
+            }
+
+
+            foreach(var (k, v) in m_MethodMap) {
+                v.GenerateCode();
             }
         }
     }

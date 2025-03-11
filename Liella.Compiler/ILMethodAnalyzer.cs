@@ -2,8 +2,10 @@
 using Liella.TypeAnalysis.Utils;
 using Liella.TypeAnalysis.Utils.Graph;
 using System;
+using System.Collections;
 using System.Collections.Frozen;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection.Emit;
 using System.Reflection.Metadata;
@@ -85,7 +87,9 @@ namespace Liella.Backend.Compiler {
             FinalStackDepthDelta = initStackDepth;
         }
 
-        
+        public ImmutableArray<(int offset, ILOpCode opcode, ulong operand)>.Enumerator GetEnumerator() {
+            return Analyzer.Decoder.Instructions[StartIndex..EndIndex].GetEnumerator();
+        }
     }
     public class ILMethodAnalyzer : FwdGraph<ILMethodBasicBlock, bool> {
         public ILDecoder Decoder { get; }
