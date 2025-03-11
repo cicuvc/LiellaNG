@@ -9,6 +9,7 @@ Liella is an AOT compiler designed for transforming Microsoft CLI Intermediate c
 ## Progress
 
 ### Basic
+
 - [x] Metadata resoution
 - [x] Non generic types/method collection and pruning
 - [x] On-demand generic type instantiation
@@ -28,8 +29,10 @@ Liella is an AOT compiler designed for transforming Microsoft CLI Intermediate c
 - [ ] Type-based devirtualization/code pruning
 
 ### Basic Language features
+
 - [ ] Static methods
 - [ ] PInvoke
+
 - [ ] Function pointers
 - [ ] Variable-length arguments
 - [ ] Linear allocator
