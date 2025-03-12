@@ -137,8 +137,6 @@ namespace Liella.TypeAnalysis.Metadata.Entry
 
 
                 foreach(var interfaceType in ImplInterfaces) {
-                    if(interfaceType.Name.Contains("IBasic")) Debugger.Break();
-
                     var implList = interfaceImpls[interfaceType];
                     var genericLookupTable = interfaceType is TypeInstantiationEntry interfaceInst ? 
                         interfaceInst.FormalArguments.Zip(interfaceInst.ActualArguments)

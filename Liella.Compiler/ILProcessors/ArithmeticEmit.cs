@@ -59,15 +59,19 @@ namespace Liella.Compiler.ILProcessors {
             if(context.IsTypeOnlyStage) {
                 BinaryArithmetricOpTypeHandler(context);
             } else {
-
+                throw new NotImplementedException();
             }
+        }
+        [ILCodeHandler(ILOpCode.Nop)]
+        public void Nop(ILOpCode opcode, ulong operand, CodeGenEvaluationContext context) {
+
         }
         [ILCodeHandler(ILOpCode.Sub,ILOpCode.Sub_ovf, ILOpCode.Sub_ovf_un)]
         public void ArithmetricSub(ILOpCode opcode, ulong operand, CodeGenEvaluationContext context) {
             if(context.IsTypeOnlyStage) {
                 BinaryArithmetricOpTypeHandler(context);
             } else {
-
+                throw new NotImplementedException();
             }
         }
         [ILCodeHandler(ILOpCode.Mul, ILOpCode.Mul_ovf, ILOpCode.Mul_ovf_un)]
@@ -83,7 +87,7 @@ namespace Liella.Compiler.ILProcessors {
             if(context.IsTypeOnlyStage) {
                 BinaryArithmetricOpTypeHandler(context);
             } else {
-
+                throw new NotImplementedException();
             }
         }
 
@@ -92,8 +96,47 @@ namespace Liella.Compiler.ILProcessors {
             if(context.IsTypeOnlyStage) {
                 BinaryArithmetricOpTypeHandler(context);
             } else {
-
+                throw new NotImplementedException();
             }
+        }
+
+
+        [ILCodeHandler(ILOpCode.Ldc_r4)]
+        public void LoadConstFloat32(ILOpCode opcode, ulong operand, CodeGenEvaluationContext context) {
+            if(context.IsTypeOnlyStage) {
+                context.Push(context.CurrentMethod!.Context.PrimitiveTypes[PrimitiveTypeCode.Single]);
+            } else {
+                throw new NotImplementedException();
+            }
+        }
+        [ILCodeHandler(ILOpCode.Ldc_r8)]
+        public void LoadConstFloat64(ILOpCode opcode, ulong operand, CodeGenEvaluationContext context) {
+            if(context.IsTypeOnlyStage) {
+                context.Push(context.CurrentMethod!.Context.PrimitiveTypes[PrimitiveTypeCode.Double]);
+            } else {
+                throw new NotImplementedException();
+            }
+        }
+        [ILCodeHandler(ILOpCode.Ldc_i8)]
+        public void LoadConstInt64(ILOpCode opcode, ulong operand, CodeGenEvaluationContext context) {
+            if(context.IsTypeOnlyStage) {
+                context.Push(context.CurrentMethod!.Context.PrimitiveTypes[PrimitiveTypeCode.Int64]);
+            } else {
+                throw new NotImplementedException();
+            }
+        }
+        [ILCodeHandler(ILOpCode.Ldc_i4, ILOpCode.Ldc_i4_s)]
+        public void LoadConstInt32(ILOpCode opcode, ulong operand, CodeGenEvaluationContext context) {
+            if(context.IsTypeOnlyStage) {
+                context.Push(context.CurrentMethod!.Context.PrimitiveTypes[PrimitiveTypeCode.Int32]);
+            } else {
+                throw new NotImplementedException();
+            }
+        }
+
+        [ILCodeHandler(ILOpCode.Ldc_i4_0, ILOpCode.Ldc_i4_1, ILOpCode.Ldc_i4_2, ILOpCode.Ldc_i4_3, ILOpCode.Ldc_i4_4, ILOpCode.Ldc_i4_5, ILOpCode.Ldc_i4_6, ILOpCode.Ldc_i4_7, ILOpCode.Ldc_i4_8, ILOpCode.Ldc_i4_m1)]
+        public void LoadConstInt32Spec(ILOpCode opcode, ulong operand, CodeGenEvaluationContext context) {
+            LoadConstInt32(opcode, (ulong)(opcode - ILOpCode.Ldc_i4_0), context);
         }
     }
 }

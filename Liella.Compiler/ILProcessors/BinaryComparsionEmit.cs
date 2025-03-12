@@ -66,7 +66,7 @@ namespace Liella.Compiler.ILProcessors {
             if(context.IsTypeOnlyStage) {
                 BinaryComparisonOpTypeHandler(context, true);
             } else {
-
+                throw new NotImplementedException();
             }
         }
         [ILCodeHandler(ILOpCode.Bne_un, ILOpCode.Bne_un_s)]
@@ -74,7 +74,7 @@ namespace Liella.Compiler.ILProcessors {
             if(context.IsTypeOnlyStage) {
                 BinaryComparisonOpTypeHandler(context, true);
             } else {
-
+                throw new NotImplementedException();
             }
         }
         [ILCodeHandler(ILOpCode.Ceq)]
@@ -82,7 +82,7 @@ namespace Liella.Compiler.ILProcessors {
             if(context.IsTypeOnlyStage) {
                 BinaryComparisonOpTypeHandler(context, true);
             } else {
-
+                throw new NotImplementedException();
             }
         }
 
@@ -91,7 +91,7 @@ namespace Liella.Compiler.ILProcessors {
             if(context.IsTypeOnlyStage) {
                 BinaryComparisonOpTypeHandler(context);
             } else {
-
+                throw new NotImplementedException();
             }
         }
         [ILCodeHandler(ILOpCode.Clt, ILOpCode.Clt_un)]
@@ -99,7 +99,7 @@ namespace Liella.Compiler.ILProcessors {
             if(context.IsTypeOnlyStage) {
                 BinaryComparisonOpTypeHandler(context);
             } else {
-
+                throw new NotImplementedException();
             }
         }
 
@@ -108,7 +108,7 @@ namespace Liella.Compiler.ILProcessors {
             if(context.IsTypeOnlyStage) {
                 BinaryComparisonOpTypeHandler(context);
             } else {
-
+                throw new NotImplementedException();
             }
         }
         [ILCodeHandler(ILOpCode.Bge_un, ILOpCode.Bge_un_s)]
@@ -116,7 +116,7 @@ namespace Liella.Compiler.ILProcessors {
             if(context.IsTypeOnlyStage) {
                 BinaryComparisonOpTypeHandler(context);
             } else {
-
+                throw new NotImplementedException();
             }
         }
 
@@ -125,7 +125,7 @@ namespace Liella.Compiler.ILProcessors {
             if(context.IsTypeOnlyStage) {
                 BinaryComparisonOpTypeHandler(context);
             } else {
-
+                throw new NotImplementedException();
             }
         }
         [ILCodeHandler(ILOpCode.Bgt_un, ILOpCode.Bgt_un_s)]
@@ -133,7 +133,7 @@ namespace Liella.Compiler.ILProcessors {
             if(context.IsTypeOnlyStage) {
                 BinaryComparisonOpTypeHandler(context);
             } else {
-
+                throw new NotImplementedException();
             }
         }
 
@@ -143,7 +143,7 @@ namespace Liella.Compiler.ILProcessors {
             if(context.IsTypeOnlyStage) {
                 BinaryComparisonOpTypeHandler(context);
             } else {
-
+                throw new NotImplementedException();
             }
         }
         [ILCodeHandler(ILOpCode.Blt_un, ILOpCode.Blt_un_s)]
@@ -151,7 +151,7 @@ namespace Liella.Compiler.ILProcessors {
             if(context.IsTypeOnlyStage) {
                 BinaryComparisonOpTypeHandler(context);
             } else {
-
+                throw new NotImplementedException();
             }
         }
         [ILCodeHandler(ILOpCode.Ble, ILOpCode.Ble_s)]
@@ -159,7 +159,7 @@ namespace Liella.Compiler.ILProcessors {
             if(context.IsTypeOnlyStage) {
                 BinaryComparisonOpTypeHandler(context);
             } else {
-
+                throw new NotImplementedException();
             }
         }
         [ILCodeHandler(ILOpCode.Ble_un, ILOpCode.Ble_un_s)]
@@ -167,7 +167,7 @@ namespace Liella.Compiler.ILProcessors {
             if(context.IsTypeOnlyStage) {
                 BinaryComparisonOpTypeHandler(context);
             } else {
-
+                throw new NotImplementedException();
             }
         }
     }

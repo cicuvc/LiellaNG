@@ -57,5 +57,8 @@ namespace Liella.TypeAnalysis.Metadata.Entry
                 collector.NotifyEntity(i);
         }
 
+        public GenericTypeContext GetGenericContext() {
+            return new(TypeArguments, MethodArguments);
+        }
     }
 }

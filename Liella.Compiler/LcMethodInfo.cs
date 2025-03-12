@@ -15,7 +15,11 @@ using System.Threading.Tasks;
 namespace Liella.Compiler {
     public enum LcMethodInitStage {
         PendingFunctionType = 0x1,
-        CompleteFunctionType = 0x2
+        CompleteFunctionType = 0x2,
+        PendingArgumentType = 0x4,
+        CompleteArgumentType = 0x8,
+        PendingLocalsType = 0x10,
+        CompleteLocalsType = 0x20
     }
     public class LcMethodInfo {
         public  LcCompileContext Context { get; }
@@ -32,10 +36,8 @@ namespace Liella.Compiler {
         protected CodeGenFunction? m_MethodFunction;
         public LcMethodInitStage InitState { get; protected set; }
 
-
-
-        public ImmutableArray<LcTypeInfo> ArgumentTypes { get; }
-        public ImmutableArray<LcTypeInfo> LocalVariableTypes { get; }
+        protected ImmutableArray<LcTypeInfo> m_ArgumentTypes;
+        protected ImmutableArray<LcTypeInfo> m_LocalVariableTypes;
         public LcMethodInfo(LcTypeInfo type, IMethodEntry entry,LcCompileContext context, CodeGenContext cgContext) {
             Context = context;
             CgContext = cgContext;
@@ -56,14 +58,26 @@ namespace Liella.Compiler {
             IsInstanceMethod = !Entry.Attributes.HasFlag(MethodAttributes.Static);
 
             if(HasBody)
-                ILCodeAnalyzer = new(entry.Decoder);
-
-            var argumentTypeBuilder = entry.Signature.ParameterTypes.Select(ResolveContextType);
-            if(IsInstanceMethod) argumentTypeBuilder = argumentTypeBuilder.Prepend(DeclType);
-            ArgumentTypes = argumentTypeBuilder.ToImmutableArray();
-            LocalVariableTypes = entry.LocalVariableTypes.Select(ResolveContextType).ToImmutableArray();
-
+                ILCodeAnalyzer = new(entry, entry.Decoder);
         }
+
+        public ImmutableArray<LcTypeInfo> GetArgumentTypes() {
+            if(!CheckTypeInitialized(LcMethodInitStage.PendingArgumentType, LcMethodInitStage.CompleteArgumentType)) {
+                var argumentTypeBuilder = Entry.Signature.ParameterTypes.Select(ResolveContextType);
+                if(IsInstanceMethod) argumentTypeBuilder = argumentTypeBuilder.Prepend(DeclType);
+                m_ArgumentTypes = argumentTypeBuilder.ToImmutableArray();
+                SetTypeInitialized(LcMethodInitStage.PendingArgumentType, LcMethodInitStage.CompleteArgumentType);
+            }
+            return m_ArgumentTypes;
+        }
+        public ImmutableArray<LcTypeInfo> GetLocalsTypes() {
+            if(!CheckTypeInitialized(LcMethodInitStage.PendingLocalsType, LcMethodInitStage.CompleteLocalsType)) {
+                m_LocalVariableTypes = Entry.LocalVariableTypes.Select(ResolveContextType).ToImmutableArray();
+                SetTypeInitialized(LcMethodInitStage.PendingLocalsType, LcMethodInitStage.CompleteLocalsType);
+            }
+            return m_LocalVariableTypes;
+        }
+
         protected bool CheckTypeInitialized(LcMethodInitStage pending, LcMethodInitStage complete) {
             if(InitState.HasFlag(complete)) return true;
             if(InitState.HasFlag(pending)) {

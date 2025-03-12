@@ -50,7 +50,7 @@ namespace Liella.Compiler.ILProcessors {
                 var shiftLhsType = context.Pop();
                 context.Push(ShiftTypeCheck(context, shiftLhsType, shiftRhsType));
             } else {
-
+                throw new NotImplementedException();
             }
         }
 
@@ -61,7 +61,7 @@ namespace Liella.Compiler.ILProcessors {
                 var shiftLhsType = context.Pop();
                 context.Push(ShiftTypeCheck(context, shiftLhsType, shiftRhsType));
             } else {
-
+                throw new NotImplementedException();
             }
         }
 
@@ -76,7 +76,7 @@ namespace Liella.Compiler.ILProcessors {
             if(context.IsTypeOnlyStage) {
                 BitwiseBinaryCheck(context);
             } else {
-
+                throw new NotImplementedException();
             }
         }
         [ILCodeHandler(ILOpCode.And)]
@@ -84,7 +84,7 @@ namespace Liella.Compiler.ILProcessors {
             if(context.IsTypeOnlyStage) {
                 BitwiseBinaryCheck(context);
             } else {
-
+                throw new NotImplementedException();
             }
         }
         [ILCodeHandler(ILOpCode.Or)]
@@ -92,7 +92,7 @@ namespace Liella.Compiler.ILProcessors {
             if(context.IsTypeOnlyStage) {
                 BitwiseBinaryCheck(context);
             } else {
-
+                throw new NotImplementedException();
             }
         }
 

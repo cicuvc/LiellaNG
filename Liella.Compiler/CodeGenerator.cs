@@ -135,8 +135,8 @@ namespace Liella.Compiler {
 
             var updateUpperBound = backendBasicBlocks.Count + 3;
             var updateQueue = new Queue<CodeBasicBlockContext>();
-            foreach(var i in updateQueue) {
-                i.UpdateInputSize(backendBasicBlocks, updateQueue);
+            foreach(var (k, v) in backendBasicBlocks) {
+                v.UpdateInputSize(backendBasicBlocks, updateQueue);
             }
             while(updateQueue.Count != 0) {
                 var currentNode = updateQueue.Dequeue();
@@ -168,7 +168,7 @@ namespace Liella.Compiler {
 
             var instDispatcher = Method.Context.CodeProcessor;
 
-            while(updateQueue.Count != 0) {
+            while(typeCheckQueue.Count != 0) {
                 var (currentBlock, currentStack) = typeCheckQueue.Dequeue();
                 currentBlock.InQueue = false;
 

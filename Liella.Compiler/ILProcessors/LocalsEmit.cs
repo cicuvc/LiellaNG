@@ -88,11 +88,11 @@ namespace Liella.Compiler.ILProcessors {
 
             if(context.IsTypeOnlyStage) {
                 var localVarIdx = (int)operand;
-                var offStackType = context.CurrentMethod.LocalVariableTypes[localVarIdx];
+                var offStackType = context.CurrentMethod.GetLocalsTypes()[localVarIdx];
                 var onStackType = LocalPushTypeCheck(context, offStackType);
                 context.Push(onStackType);
             } else {
-
+                throw new NotImplementedException();
             }
         }
         [ILCodeHandler(ILOpCode.Ldloc_0, ILOpCode.Ldloc_1, ILOpCode.Ldloc_2, ILOpCode.Ldloc_3)]
@@ -106,11 +106,11 @@ namespace Liella.Compiler.ILProcessors {
 
             if(context.IsTypeOnlyStage) {
                 var localVarIdx = (int)operand;
-                var offStackType = context.CurrentMethod.ArgumentTypes[localVarIdx];
+                var offStackType = context.CurrentMethod.GetArgumentTypes()[localVarIdx];
                 var onStackType = LocalPushTypeCheck(context, offStackType);
                 context.Push(onStackType);
             } else {
-
+                throw new NotImplementedException();
             }
         }
         [ILCodeHandler(ILOpCode.Ldarg_0, ILOpCode.Ldarg_1, ILOpCode.Ldarg_2, ILOpCode.Ldarg_3)]
@@ -126,10 +126,10 @@ namespace Liella.Compiler.ILProcessors {
             if(context.IsTypeOnlyStage) {
                 var localVarIdx = (int)operand;
                 var onStackType = context.Pop();
-                var offStackType = context.CurrentMethod.ArgumentTypes[localVarIdx];
+                var offStackType = context.CurrentMethod.GetArgumentTypes()[localVarIdx];
                 LocalPopTypeCheck(context, onStackType, offStackType);
             } else {
-
+                throw new NotImplementedException();
             }
         }
 
@@ -140,10 +140,10 @@ namespace Liella.Compiler.ILProcessors {
             if(context.IsTypeOnlyStage) {
                 var localVarIdx = (int)operand;
                 var onStackType = context.Pop();
-                var offStackType = context.CurrentMethod.LocalVariableTypes[localVarIdx];
+                var offStackType = context.CurrentMethod.GetLocalsTypes()[localVarIdx];
                 LocalPopTypeCheck(context, onStackType, offStackType);
             } else {
-
+                throw new NotImplementedException();
             }
         }
 
@@ -159,12 +159,12 @@ namespace Liella.Compiler.ILProcessors {
 
             if(context.IsTypeOnlyStage) {
                 var localVarIdx = (int)operand;
-                var offStackType = context.CurrentMethod.ArgumentTypes[localVarIdx];
+                var offStackType = context.CurrentMethod.GetArgumentTypes()[localVarIdx];
                 var referenceEntry = ReferenceTypeEntry.Create(context.CompileContext.TypeEnv.EntryManager, offStackType.Entry);
                 var onStackType = context.CompileContext.NativeTypeMap[referenceEntry];
                 context.Push(onStackType);
             } else {
-
+                throw new NotImplementedException();
             }
         }
         [ILCodeHandler(ILOpCode.Ldloca, ILOpCode.Ldloca_s)]
@@ -173,12 +173,12 @@ namespace Liella.Compiler.ILProcessors {
 
             if(context.IsTypeOnlyStage) {
                 var localVarIdx = (int)operand;
-                var offStackType = context.CurrentMethod.LocalVariableTypes[localVarIdx];
+                var offStackType = context.CurrentMethod.GetLocalsTypes()[localVarIdx];
                 var referenceEntry = ReferenceTypeEntry.Create(context.CompileContext.TypeEnv.EntryManager, offStackType.Entry);
                 var onStackType = context.CompileContext.NativeTypeMap[referenceEntry];
                 context.Push(onStackType);
             } else {
-
+                throw new NotImplementedException();
             }
         }
     }

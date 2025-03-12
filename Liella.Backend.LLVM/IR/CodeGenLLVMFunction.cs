@@ -37,7 +37,9 @@ namespace Liella.Backend.LLVM.IR
 
         public override CodeGenBasicBlock AddBasicBlock(string name)
         {
-            throw new NotImplementedException();
+            var newBlock = new CodeGenLLVMBasicBlock(LLVMFunction.AppendBasicBlock("entry"), this);
+            m_BasicBlocks.Add(newBlock);
+            return newBlock;
         }
 
         public override void RemoveBasicBlock(CodeGenBasicBlock del)

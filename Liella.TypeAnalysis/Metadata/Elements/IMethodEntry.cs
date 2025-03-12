@@ -13,5 +13,7 @@ namespace Liella.TypeAnalysis.Metadata.Elements
         public IMethodEntry? VirtualMethodPrototype { get; }
         public MethodImplAttributes ImplAttributes { get; }
         public IEnumerable<ITypeEntry> LocalVariableTypes { get; }
+
+        public GenericTypeContext GetGenericContext();
     }
 }

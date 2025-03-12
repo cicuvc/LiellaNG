@@ -1,4 +1,6 @@
 ﻿using Liella.Backend.Components;
+using Liella.TypeAnalysis.Metadata.Elements;
+using Liella.TypeAnalysis.Metadata.Entry;
 using Liella.TypeAnalysis.Utils;
 using Liella.TypeAnalysis.Utils.Graph;
 using System;
@@ -7,6 +9,7 @@ using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Emit;
 using System.Reflection.Metadata;
 using System.Text;
@@ -60,20 +63,54 @@ namespace Liella.Backend.Compiler {
                 return Analyzer.Decoder.Instructions[StartIndex + index];
             }
         }
+        public static int ResolveVarPushSize(IMethodEntry methodEntry,ILOpCode code, ulong operand, StackBehaviour behavior) {
+            switch(code) {
+                case ILOpCode.Call:
+                case ILOpCode.Callvirt: {
+                    var targetMethod = methodEntry.TypeEnv.TokenResolver.ResolveMethodToken(methodEntry.AsmInfo, MetadataTokenHelpers.MakeEntityHandle((int)operand), methodEntry.GetGenericContext(), out var declType);
+                    return targetMethod.Signature.ReturnType is PrimitiveTypeEntry { InvariantPart: { TypeCode: PrimitiveTypeCode.Void } } ? 0 : 1;
+                }
+                case ILOpCode.Ret: {
+                    return 0;
+                }
+                default: {
+                    throw new NotImplementedException();
+                }
+            }
+        }
+        public static int ResolveVarPopSize(IMethodEntry methodEntry, ILOpCode code, ulong operand, StackBehaviour behavior) {
+            switch(code) {
+                case ILOpCode.Newobj:
+                case ILOpCode.Call:
+                case ILOpCode.Callvirt: {
+                    var targetMethod = methodEntry.TypeEnv.TokenResolver.ResolveMethodToken(methodEntry.AsmInfo, MetadataTokenHelpers.MakeEntityHandle((int)operand), methodEntry.GetGenericContext(), out var declType);
+                    var popSize = targetMethod.Signature.ParameterTypes.Length;
+                    if((!targetMethod.Attributes.HasFlag(MethodAttributes.Static)) && (code != ILOpCode.Newobj)) popSize++;
+                    return -popSize;
+                }
+                case ILOpCode.Ret: {
+                    return methodEntry.Signature.ReturnType is PrimitiveTypeEntry { InvariantPart: { TypeCode: PrimitiveTypeCode.Void } } ? 0 : -1;
+                }
+                default: {
+                    throw new NotImplementedException();
+                }
+            }
+        }
         public ILMethodBasicBlock(ILMethodAnalyzer analyzer, int startIndex, int endIndex) {
             Analyzer = analyzer;
             StartIndex = startIndex;
             EndIndex = endIndex;
+
 
             var initStackDepth = 0;
             var minStackDepth = int.MaxValue;
             var maxStackDepth = -int.MaxValue;
             var instructions = analyzer.Decoder.Instructions[startIndex..endIndex];
 
-            foreach(var (_, code, _) in instructions) {
+            foreach(var (_, code, operand) in instructions) {
                 var opCodeInfo = ILDecoder.OpCodeMap[code];
-                var pushDelta = StackDepthDelta.TryGetValue(opCodeInfo.StackBehaviourPush, out var pushD) ? pushD : throw new NotImplementedException();
-                var popDelta = StackDepthDelta.TryGetValue(opCodeInfo.StackBehaviourPop, out var popD) ? popD : throw new NotImplementedException();
+                var pushDelta = StackDepthDelta.TryGetValue(opCodeInfo.StackBehaviourPush, out var pushD) ? pushD : ResolveVarPushSize(analyzer.Entry, code, operand, opCodeInfo.StackBehaviourPush);
+                var popDelta = StackDepthDelta.TryGetValue(opCodeInfo.StackBehaviourPop, out var popD) ? popD : ResolveVarPopSize(analyzer.Entry, code, operand, opCodeInfo.StackBehaviourPop);
 
                 initStackDepth += popDelta;
                 minStackDepth = Math.Min(minStackDepth, initStackDepth);
@@ -92,10 +129,12 @@ namespace Liella.Backend.Compiler {
         }
     }
     public class ILMethodAnalyzer : FwdGraph<ILMethodBasicBlock, bool> {
+        public IMethodEntry Entry { get; }
         public ILDecoder Decoder { get; }
         public ILMethodBasicBlock EntryBlock { get; } = null!;
-        public ILMethodAnalyzer(ILDecoder decoder) {
+        public ILMethodAnalyzer(IMethodEntry entry,ILDecoder decoder) {
             Decoder = decoder;
+            Entry = entry;
 
             var opCodeMap = ILDecoder.OpCodeMap;
 

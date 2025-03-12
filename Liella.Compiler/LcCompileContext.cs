@@ -70,7 +70,10 @@ namespace Liella.Compiler
                 new ArithmeticEmit(),
                 new LocalsEmit(),
                 new BitwiseEmit(),
-                new BinaryComparsionEmit()
+                new BinaryComparsionEmit(),
+                new AllocEmit(),
+                new ControlFlowEmit(),
+                new IndirectEmit()
             };
         }
         public int RegisterInterface(LcTypeInfo typeInfo) {
@@ -93,7 +96,8 @@ namespace Liella.Compiler
 
                         m_PrimitiveTypes.Add(primEntry.InvariantPart.TypeCode, primitiveType);
                         m_NativeTypeMap.Add(typeEntry, primitiveType);
-                    }else if(typeEntry is PointerTypeEntry pointerEntry) {
+                        m_NativeTypeMap.Add(primitiveImplType, primitiveType);
+                    } else if(typeEntry is PointerTypeEntry pointerEntry) {
                         m_NativeTypeMap.Add(typeEntry, new LcPointerTypeInfo(pointerEntry, this, Context));
                     } else if(typeEntry is ReferenceTypeEntry refEntry) {
                         m_NativeTypeMap.Add(typeEntry, new LcReferenceTypeInfo(refEntry, this, Context));

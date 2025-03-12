@@ -67,5 +67,9 @@ namespace Liella.TypeAnalysis.Metadata.Entry
         }
 
         public IInstantiationEntry AsPrimary(EntityEntryManager _, bool isPrimary = true) => this;
+
+        public GenericTypeContext GetGenericContext() {
+            return new(TypeArguments, MethodArguments);
+        }
     }
 }

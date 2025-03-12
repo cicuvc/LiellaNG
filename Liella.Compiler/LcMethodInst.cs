@@ -6,6 +6,7 @@ using System;
 using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -21,9 +22,10 @@ namespace Liella.Compiler {
             MethodDefinitionEntry = methodInst.InvariantPart.Definition;
 
             m_GenericSubstituteMap = methodInst.FormalArguments.Zip(methodInst.ActualArguments).ToFrozenDictionary(e => e.First, e => e.Second);
+            if(m_GenericSubstituteMap is null) Debugger.Break();
         }
 
-        protected override LcTypeInfo ResolveContextType(ITypeEntry entry) {
+        public override LcTypeInfo ResolveContextType(ITypeEntry entry) {
             var subType = GenericSubstitutionHelpers.SubstituteGenericEntry(Context.TypeEnv.EntryManager, m_GenericSubstituteMap, entry);
             return base.ResolveContextType(subType);
         }
